@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Doraemon AI Pro V2</title>
+<style>
+*{box-sizing:border-box}
+:root{
+    --bg-primary:#0d1117; --bg-secondary:#161b22; --bg-header:#11161d;
+    --bg-message:#21262d; --bg-user:#075985; --border:#30363d;
+    --text-primary:#e6edf3; --text-secondary:#8b949e;
+    --accent:#00d6ff; --accent-hover:#00b8e0; --success:#3fb950;
+}
+body.light{
+    --bg-primary:#ffffff; --bg-secondary:#f6f8fa; --bg-header:#f0f2f4;
+    --bg-message:#ffffff; --bg-user:#0066cc; --border:#d0d7de;
+    --text-primary:#24292f; --text-secondary:#57606a; --accent:#0066cc; --accent-hover:#0052a3;
+}
+body{margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;transition:all 0.3s ease;}
+.app{width:100%;max-width:900px;height:100vh;margin:auto;display:flex;flex-direction:column;background:var(--bg-secondary);}
+header{height:70px;display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--border);background:var(--bg-header);}
+.header-left{display:flex;align-items:center;gap:12px;}
+.logo{font-size:38px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.title{font-size:20px;font-weight:bold;background:linear-gradient(135deg,var(--accent),#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.status{margin-top:4px;color:var(--success);font-size:12px;display:flex;align-items:center;gap:5px;}
+.status::before{content:"";width:8px;height:8px;background:var(--success);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.header-actions{display:flex;gap:8px;}
+.icon-btn{background:transparent;border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:16px;transition:all 0.2s;}
+.icon-btn:hover{background:var(--bg-message);border-color:var(--accent);transform:translateY(-2px);}
+#chat{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
+.msg{max-width:85%;padding:13px 16px;border-radius:15px;line-height:1.6;white-space:pre-wrap;word-break:break-word;animation:slideIn 0.3s ease;position:relative;}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.ai{background:var(--bg-message);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:5px;}
+.user{align-self:flex-end;background:var(--bg-user);color:white;border-bottom-right-radius:5px;}
+.name{font-weight:bold;margin-bottom:5px;font-size:13px;opacity:0.9;}
+.time{font-size:11px;opacity:0.6;margin-top:5px;}
+.inputbox{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--bg-header);position:relative;}
+#input{flex:1;min-width:0;padding:14px;border:1px solid var(--border);border-radius:12px;outline:none;background:var(--bg-message);color:var(--text-primary);font-size:16px;transition:all 0.2s;}
+#input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,214,255,0.1);}
+button{border:0;border-radius:12px;padding:0 20px;background:var(--accent);color:#001014;font-weight:bold;cursor:pointer;transition:all 0.2s;}
+button:hover{background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,214,255,0.3);}
+button:active{transform:scale(0.97);}
+.typing{color:var(--text-secondary);font-style:italic;font-size:13px;}
+.code{background:var(--bg-primary);border:1px solid var(--border);padding:12px;border-radius:8px;overflow-x:auto;margin-top:8px;font-family:'Consolas','Monaco',monospace;font-size:13px;position:relative;}
+.code-lang{position:absolute;top:0;right:0;background:var(--accent);color:#000;padding:2px 8px;font-size:11px;font-weight:bold;border-radius:0 8px 0 8px;}
+.suggestions{position:absolute;bottom:100%;left:0;right:0;background:var(--bg-message);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;max-height:200px;overflow-y:auto;display:none;z-index:10;}
+.suggestion-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.2s;}
+.suggestion-item:hover{background:var(--bg-header);}
+.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+.modal.show{display:flex;}
+.modal-content{background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;animation:modalSlide 0.3s ease;}
+@keyframes modalSlide{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:20px;font-weight:bold;}
+.close-btn{background:transparent;border:none;color:var(--text-secondary);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}
+.close-btn:hover{color:var(--text-primary);background:transparent;transform:none;box-shadow:none;}
+.knowledge-item{background:var(--bg-message);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;}
+.knowledge-q{color:var(--accent);font-weight:bold;margin-bottom:6px;}
+.delete-btn{background:#f85149;color:white;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:8px;}
+@media(max-width:600px){.msg{max-width:92%}.title{font-size:17px}button{padding:0 15px}.header-actions{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+    <div class="header-left">
+        <div class="logo">🤖</div>
+        <div>
+            <div class="title" id="aiName">Doraemon AI Pro V2</div>
+            <div class="status">Online • Sẵn sàng</div>
+        </div>
+    </div>
+    <div class="header-actions">
+        <button class="icon-btn" onclick="toggleTheme()" title="Đổi theme">🌓</button>
+        <button class="icon-btn" onclick="showHistory()" title="Lịch sử">📜</button>
+        <button class="icon-btn" onclick="showKnowledge()" title="Kiến thức">🧠</button>
+        <button class="icon-btn" onclick="exportData()" title="Xuất dữ liệu">💾</button>
+    </div>
+</header>
+<main id="chat"></main>
+<div class="inputbox">
+    <div class="suggestions" id="suggestions"></div>
+    <input id="input" placeholder="Nhập câu hỏi... (gõ /help để xem lệnh)" autocomplete="off">
+    <button onclick="send()">Gửi ➤</button>
+</div>
+</div>
+
+<!-- Modal Lịch sử -->
+<div class="modal" id="historyModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">📜 Lịch sử trò chuyện</div>
+            <button class="close-btn" onclick="closeModal('historyModal')">&times;</button>
+        </div>
+        <div id="historyContent"></div>
+    </div>
+</div>
+
+<!-- Modal Kiến thức -->
+<div class="modal" id="knowledgeModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">🧠 Kiến thức đã học</div>
+            <button class="close-btn" onclick="closeModal('knowledgeModal')">&times;</button>
+        </div>
+        <div id="knowledgeContent"></div>
+    </div>
+</div>
+
+<script>
+const AI_NAME = "Doraemon AI Pro V2";
+const VERSION = "2.0 Ultimate";
+
+let memory = JSON.parse(localStorage.getItem("doraemon_memory") || "{}");
+let history = JSON.parse(localStorage.getItem("doraemon_history") || "[]");
+let knowledge = JSON.parse(localStorage.getItem("doraemon_knowledge") || "[]");
+
+const COMMANDS = [
+    "/help - Xem hướng dẫn đầy đủ",
+    "/reset - Xóa sạch dữ liệu & khởi động lại V2",
+    "/day câu hỏi => câu trả lời - Dạy AI",
+    "/wiki từ khóa - Tra cứu Wikipedia",
+    "/history - Xem lịch sử chat",
+    "/clear - Xóa màn hình chat",
+    "/theme - Đổi giao diện Sáng/Tối",
+    "/export - Tải xuống bản sao lưu dữ liệu"
+];
+
+function save(){
+    localStorage.setItem("doraemon_memory", JSON.stringify(memory));
+    localStorage.setItem("doraemon_history", JSON.stringify(history.slice(-100)));
+    localStorage.setItem("doraemon_knowledge", JSON.stringify(knowledge));
+}
+
+function escapeHTML(text){
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatTime(){
+    return new Date().toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+}
+
+function formatCode(text){
+    return text.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+        return `<div class="code"><span class="code-lang">${lang || 'code'}</span>${escapeHTML(code.trim())}</div>`;
+    });
+}
+
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const suggestions = document.getElementById("suggestions");
+
+function addMessage(role, text, showTime = true){
+    const div = document.createElement("div");
+    div.className = "msg " + (role === "user" ? "user" : "ai");
+    const name = role === "user" ? "Bạn" : (memory.aiName || AI_NAME);
+    const timeHtml = showTime ? `<div class="time">${formatTime()}</div>` : "";
+    div.innerHTML = `<div class="name">${name}</div><div>${formatCode(escapeHTML(text))}</div>${timeHtml}`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping(){
+    const div = document.createElement("div");
+    div.className = "msg ai typing";
+    div.id = "typing-indicator";
+    div.innerHTML = `${memory.aiName || AI_NAME} đang xử lý<span class="dots">...</span>`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    let dots = 0;
+    window.typingInterval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        const el = div.querySelector(".dots");
+        if(el) el.textContent = ".".repeat(dots);
+    }, 300);
+}
+
+function removeTyping(){
+    const el = document.getElementById("typing-indicator");
+    if(el) el.remove();
+    clearInterval(window.typingInterval);
+}
+
+async function searchWikipedia(query){
+    try{
+        const lang = query.toLowerCase().includes("tiếng anh") ? "en" : "vi";
+        const cleanQuery = query.replace(/wikipedia|wiki|tra|tìm|hiểu/gi,"").trim();
+        if(!cleanQuery) return null;
+        const searchUrl = `https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(cleanQuery)}&limit=1&namespace=0&format=json&origin=*`;
+        const searchRes = await fetch(searchUrl);
+        const searchData = await searchRes.json();
+        if(!searchData[1] || searchData[1].length === 0) return null;
+        const title = searchData[1][0];
+        const contentUrl = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}?origin=*`;
+        const contentRes = await fetch(contentUrl);
+        const contentData = await contentRes.json();
+        if(contentData.type === "disambiguation") return `📚 "${title}" có nhiều nghĩa. Hãy hỏi cụ thể hơn.`;
+        let extract = contentData.extract || "";
+        if(extract.length > 500) extract = extract.substring(0, 500) + "...";
+        const url = contentData.content_urls?.desktop?.page || "";
+        return `📚 **${title}**\n\n${extract}\n\n🔗 Nguồn: ${url}`;
+    }catch(err){ return null; }
+}
+
+function calculator(text){
+    let s = text.toLowerCase().replace(/tính|bang|kết quả|bằng mấy|bằng bao nhiêu/g,"").replace(/\?/g,"").replace(/,/g,".").trim();
+    if(!/[0-9]/.test(s) || !/[+\-*\/%]/.test(s)) return null;
+    const mathFuncs = {'sqrt':'Math.sqrt','sin':'Math.sin','cos':'Math.cos','tan':'Math.tan','log':'Math.log10','ln':'Math.log','abs':'Math.abs','pi':'Math.PI','e':'Math.E','^':'**'};
+    for(const [key, val] of Object.entries(mathFuncs)) s = s.split(key).join(val);
+    if(!/^[0-9+\-*/%.()\sMath.PIElogsqrtcossintanabs^]+$/.test(s)) return null;
+    try{
+        const result = Function('"use strict";return (' + s + ')')();
+        if(!Number.isFinite(result)) return null;
+        const formatted = Number.isInteger(result) ? result : (result < 0.0001 || result > 1000000 ? result.toExponential(4) : parseFloat(result.toFixed(6)));
+        return `🧮 Kết quả: ${formatted}`;
+    }catch(e){ return null; }
+}
+
+function similarity(a, b){
+    const A = new Set(normalize(a).split(/\s+/).filter(w => w.length > 2));
+    const B = new Set(normalize(b).split(/\s+/).filter(w => w.length > 2));
+    if(A.size === 0 || B.size === 0) return 0;
+    let same = 0;
+    A.forEach(x => { if(B.has(x)) same++; });
+    return same / Math.max(A.size, B.size);
+}
+
+function normalize(text){
+    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d");
+}
+
+function findBestMatch(question){
+    let best = null, bestScore = 0;
+    for(const item of knowledge){
+        const score = similarity(question, item.q);
+        if(score > bestScore){ bestScore = score; best = item; }
+    }
+    return bestScore >= 0.35 ? best : null;
+}
+
+async function thinkAsync(text){
+    const q = normalize(text);
+    
+    if(q === "/reset"){
+        if(confirm("⚠️ Bạn có chắc muốn XÓA SẠCH toàn bộ dữ liệu và khởi động lại V2?")){
+            localStorage.clear();
+            location.reload();
+        }
+        return "Đã hủy.";
+    }
+    if(q === "/help"){
+        return `🚀 **CHÀO MỪNG ĐẾN VỚI DORAEMON AI PRO V2**\n\n**Các lệnh mới:**\n${COMMANDS.join('\n')}\n\n**Thử ngay:**\n• Tính toán: \`sqrt(144) + 5\`\n• Tra Wiki: \`/wiki Hà Nội\`\n• Dạy AI: \`/day 1+1 là gì => bằng 2\``;
+    }
+    if(q === "/clear"){
+        if(confirm("Xóa sạch lịch sử chat?")){
+            history = []; save(); chat.innerHTML = "";
+            return "🧹 Đã xóa lịch sử!";
+        }
+        return "Đã hủy.";
+    }
+    if(q === "/memory") return "🧠 **Bộ nhớ:**\n\n" + JSON.stringify(memory, null, 2);
+    if(q.startsWith("/name ")){
+        const name = text.substring(6).trim();
+        if(name){ memory.aiName = name; save(); document.getElementById("aiName").textContent = name; return `🤖 Đã đổi tên thành: **${name}**`; }
+    }
+    if(q.startsWith("/wiki ")){
+        showTyping();
+        const result = await searchWikipedia(text.substring(6));
+        removeTyping();
+        return result || "❌ Không tìm thấy trên Wikipedia.";
+    }
+    if(q === "/theme"){ toggleTheme(); return "Đã đổi giao diện!"; }
+    if(q === "/export"){ exportData(); return "💾 Đang tải xuống file backup..."; }
+
+    const calc = calculator(text);
+    if(calc) return calc;
+
+    if((q.includes("là gì") || q.includes("là ai")) && !text.startsWith("/")){
+        showTyping();
+        const result = await searchWikipedia(text.replace(/là gì|là ai|\?/gi,"").trim());
+        removeTyping();
+        if(result) return result;
+    }
+
+    const match = findBestMatch(text);
+    if(match) return match.a;
+
+    if(/chào|hello|hi|hey|xin chào/.test(q)){
+        return `Chào ${memory.userName || 'bạn'}! 👋 Mình là **Doraemon AI Pro V2**. Mình đã được nâng cấp với khả năng tra Wikipedia, tính toán nâng cao và giao diện mới. Bạn cần giúp gì?`;
+    }
+    if(q.includes("ban la ai") || q.includes("ten ban")){
+        return `Mình là **${memory.aiName || AI_NAME}** (Phiên bản ${VERSION}) - AI chatbot chạy trực tiếp trên trình duyệt của bạn, không cần API key!`;
+    }
+    if(q.includes("lam duoc gi") || q.includes("co the gi")){
+        return `Ở phiên bản V2 này, mình có thể:\n✅ Tính toán nâng cao (sin, cos, sqrt, log...)\n✅ Tra cứu Wikipedia tự động\n✅ Học kiến thức mới qua lệnh /day\n✅ Lưu trữ & Xuất dữ liệu cục bộ\n✅ Giao diện Dark/Light mode`;
+    }
+
+    return `🤔 Mình chưa hiểu rõ câu này. Bạn có thể:\n1. **Dạy mình:** /day câu hỏi => câu trả lời\n2. **Tra Wikipedia:** /wiki từ khóa\n3. **Xem lệnh:** /help`;
+}
+
+function command(text){
+    if(!text.startsWith("/day ")) return null;
+    const body = text.substring(5);
+    const parts = body.split("=>");
+    if(parts.length < 2) return "❌ **Sai cú pháp!**\nDùng: /day câu hỏi => câu trả lời";
+    const q = parts[0].trim(), a = parts.slice(1).join("=>").trim();
+    if(!q || !a) return "❌ Câu hỏi hoặc câu trả lời trống!";
+    const existing = knowledge.find(k => normalize(k.q) === normalize(q));
+    if(existing){
+        if(confirm("Kiến thức này đã tồn tại. Cập nhật?")){ existing.a = a; existing.time = new Date().toISOString(); save(); return "✅ Đã **cập nhật** kiến thức!"; }
+        return "Đã hủy.";
+    }
+    knowledge.push({q: q, a: a, time: new Date().toISOString()});
+    save();
+    return `✅ Đã học!\n\n**Q:** ${q}\n**A:** ${a}`;
+}
+
+async function send(){
+    const text = input.value.trim();
+    if(!text) return;
+    input.value = "";
+    addMessage("user", text);
+    history.push({role:"user", text:text, time:new Date().toISOString()});
+    
+    if(text.startsWith("/day ")){
+        const response = command(text);
+        addMessage("ai", response);
+        history.push({role:"ai", text:response, time:new Date().toISOString()});
+        save();
+        return;
+    }
+    
+    showTyping();
+    setTimeout(async () => {
+        const response = await thinkAsync(text);
+        removeTyping();
+        addMessage("ai", response);
+        history.push({role:"ai", text:response, time:new Date().toISOString()});
+        save();
+    }, 400);
+}
+
+input.addEventListener("input", function(){
+    const val = this.value.toLowerCase();
+    if(val.startsWith("/")){
+        const matches = COMMANDS.filter(c => c.toLowerCase().includes(val));
+        if(matches.length > 0){
+            suggestions.innerHTML = matches.map(c => `<div class="suggestion-item" onclick="selectSuggestion('${c.split(' - ')[0]}')">${c}</div>`).join("");
+            suggestions.style.display = "block";
+        }else{ suggestions.style.display = "none"; }
+    }else{ suggestions.style.display = "none"; }
+});
+
+function selectSuggestion(text){ input.value = text; suggestions.style.display = "none"; input.focus(); }
+input.addEventListener("keydown", function(e){ if(e.key === "Enter") send(); if(e.key === "Escape") suggestions.style.display = "none"; });
+
+function closeModal(id){ document.getElementById(id).classList.remove("show"); }
+function showHistory(){
+    const content = document.getElementById("historyContent");
+    if(history.length === 0) content.innerHTML = "<p style='color:var(--text-secondary);text-align:center'>Chưa có lịch sử</p>";
+    else content.innerHTML = history.map(h => `<div class="knowledge-item"><div style="color:var(--text-secondary);font-size:12px">${h.time}</div><div style="color:${h.role==='user'?'var(--accent)':'var(--text-primary)'}">${h.role === "user" ? "👤 Bạn" : "🤖 AI"}: ${h.text}</div></div>`).reverse().join("");
+    document.getElementById("historyModal").classList.add("show");
+}
+function showKnowledge(){
+    const content = document.getElementById("knowledgeContent");
+    if(knowledge.length === 0) content.innerHTML = "<p style='color:var(--text-secondary);text-align:center'>Chưa có kiến thức. Dùng <code>/day</code> để dạy AI.</p>";
+    else content.innerHTML = knowledge.map((k, i) => `<div class="knowledge-item"><div class="knowledge-q">Q: ${k.q}</div><div class="knowledge-a">A: ${k.a}</div><button class="delete-btn" onclick="deleteKnowledge(${i})">🗑 Xóa</button></div>`).join("");
+    document.getElementById("knowledgeModal").classList.add("show");
+}
+function deleteKnowledge(index){ if(confirm("Xóa?")){ knowledge.splice(index, 1); save(); showKnowledge(); } }
+function toggleTheme(){ document.body.classList.toggle("light"); memory.theme = document.body.classList.contains("light") ? "light" : "dark"; save(); }
+function exportData(){
+    const data = {memory, knowledge, history, exportedAt: new Date().toISOString(), version: VERSION};
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `doraemon-ai-v2-backup.json`; a.click(); URL.revokeObjectURL(url);
+}
+
+function loadHistory(){
+    if(history.length === 0){
+        addMessage("ai", `🚀 **Xin chào! Mình là Doraemon AI Pro V2.**\n\nMình đã được nâng cấp toàn diện:\n✅ Tra cứu Wikipedia (/wiki)\n✅ Tính toán nâng cao (sin, cos, sqrt)\n✅ Giao diện Dark/Light mode\n✅ Xuất/Nhập dữ liệu\n\nGõ **/help** để xem chi tiết hoặc **/reset** nếu muốn xóa sạch dữ liệu cũ!`, false);
+    }else{
+        history.slice(-50).forEach(h => addMessage(h.role, h.text, false));
+    }
+}
+
+if(memory.theme === "light") document.body.classList.add("light");
+document.getElementById("aiName").textContent = memory.aiName || AI_NAME;
+loadHistory();
+input.focus();
+</script>
+</body>
+  </html>#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+AI SIEU VIP - BAN OFFLINE (khong can API key)
+- Tim cau tra loi bang TF-IDF (bo dau, khong phan biet hoa thuong)
+- Thu vien code mau: Python, Lua/Roblox, C++, HTML/CSS/JS
+- Day cho AI hoc: /day cau hoi => tra loi (luu file ai_kb.json)
+- Tra cuu Wikipedia khi co mang (khong can key)
+- May tinh an toan (khong dung eval)
+Chi dung thu vien chuan, Python 3.8+
+"""
+import ast
+import json
+import math
+import operator
+import os
+import random
+import re
+import sys
+import unicodedata
+import urllib.error
+import urllib.parse
+import urllib.request
+from collections import Counter
+from datetime import datetime
+
+KB_FILE = "ai_kb.json"
+MEM_FILE = "ai_mem.json"
+CODE_DIR = "ai_code"
+EXT = {"python": "py", "lua": "lua", "cpp": "cpp", "html": "html", "js": "js"}
+WEEKDAYS = ["Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy", "Chủ nhật"]
+
+
+# ═══════════ XỬ LÝ CHỮ ═══════════
+def fold(s):
+    s = s.replace("đ", "d").replace("Đ", "D")
+    s = unicodedata.normalize("NFD", s)
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    return s.lower()
+
+
+STOP = set("""la gi co khong the nao cho toi minh ban oi a va cua nhe di hay duoc
+nhu em anh ah vay thi o trong mot nhung cac de""".split())
+
+
+def tokens(s):
+    words = [w for w in re.findall(r"[a-z0-9+#]+", fold(s)) if w not in STOP]
+    bigrams = [a + "_" + b for a, b in zip(words, words[1:])]
+    return words + bigrams
+
+
+# ═══════════ MÁY TÍNH AN TOÀN ═══════════
+OPS = {
+    ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
+    ast.Div: operator.truediv, ast.Pow: operator.pow, ast.Mod: operator.mod,
+    ast.FloorDiv: operator.floordiv, ast.USub: operator.neg, ast.UAdd: operator.pos,
+}
+FUNCS = {"sqrt": math.sqrt, "sin": math.sin, "cos": math.cos, "tan": math.tan,
+         "log": math.log10, "ln": math.log, "abs": abs}
+CONST = {"pi": math.pi, "e": math.e}
+
+
+def safe_eval(expr):
+    def ev(n):
+        if isinstance(n, ast.Expression):
+            return ev(n.body)
+        if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)) \
+                and not isinstance(n.value, bool):
+            return n.value
+        if isinstance(n, ast.Name) and n.id in CONST:
+            return CONST[n.id]
+        if isinstance(n, ast.BinOp) and type(n.op) in OPS:
+            a, b = ev(n.left), ev(n.right)
+            if isinstance(n.op, ast.Pow) and abs(b) > 1000:
+                raise ValueError("số mũ quá lớn")
+            return OPS[type(n.op)](a, b)
+        if isinstance(n, ast.UnaryOp) and type(n.op) in OPS:
+            return OPS[type(n.op)](ev(n.operand))
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) \
+                and n.func.id in FUNCS and len(n.args) == 1 and not n.keywords:
+            return FUNCS[n.func.id](ev(n.args[0]))
+        raise ValueError("không hợp lệ")
+    return ev(ast.parse(expr, mode="eval"))
+
+
+def calc_from_text(text):
+    s = fold(text)
+    for w in ("tinh", "bang bao nhieu", "ket qua", "bang may", "=", "?"):
+        s = s.replace(w, " ")
+    s = s.replace(",", ".").replace("^", "**").strip()
+    if not re.search(r"\d", s):
+        return None
+    if not re.search(r"[-+*/%]|sqrt|sin|cos|tan|log|ln|abs", s):
+        return None
+    if not re.fullmatch(r"[\d\s+\-*/%.()a-z]+", s):
+        return None
+    if re.fullmatch(r"\d{1,4}[-/]\d{1,2}[-/]\d{1,4}", s):
+        return None
+    try:
+        r = safe_eval(s)
+    except ZeroDivisionError:
+        return "Không chia được cho 0."
+    except Exception:
+        return None
+    if isinstance(r, float) and r.is_integer() and abs(r) < 1e15:
+        r = int(r)
+    elif isinstance(r, float):
+        r = "%.10g" % r
+    return "Kết quả: %s" % r
+
+
+# ═══════════ KIẾN THỨC CÓ SẴN ═══════════
+def C(q, intro, lang, code):
+    return {"q": q, "a": intro, "lang": lang, "code": code.strip("\n")}
+
+
+SEED = [
+    {"q": ["xin chào", "chào", "hi", "hello", "hé lô", "alo"],
+     "a": ["Chào {user}! Mình là {ai}. Gõ /help để xem lệnh nhé.", "Xin chào! Cần mình giúp gì?"]},
+    {"q": ["bạn tên là gì", "tên bạn là gì", "bạn là ai", "giới thiệu bản thân"],
+     "a": "Mình là {ai}, chatbot chạy offline trên máy bạn, không cần API key."},
+    {"q": ["bạn làm được gì", "khả năng của bạn", "bạn biết gì", "chức năng", "hướng dẫn sử dụng"],
+     "a": "Mình tính toán, xem giờ/ngày, đưa code mẫu (Python, Lua/Roblox, C++, HTML/JS), "
+          "tra Wikipedia khi có mạng, và học điều bạn dạy bằng /day. Gõ /help để xem hết."},
+    {"q": ["cảm ơn", "cám ơn", "thanks", "thank you"],
+     "a": ["Không có gì!", "Rất vui được giúp bạn!"]},
+    {"q": ["bạn khỏe không", "dạo này thế nào", "bạn có khỏe không"],
+     "a": "Mình là chương trình nên lúc nào cũng ổn. Còn bạn thì sao?"},
+    {"q": ["mấy giờ rồi", "bây giờ là mấy giờ", "giờ hiện tại", "xem giờ"],
+     "a": "Bây giờ là {time}."},
+    {"q": ["hôm nay ngày mấy", "ngày bao nhiêu", "hôm nay là thứ mấy", "ngày hôm nay", "hôm nay thứ mấy"],
+     "a": "Hôm nay là {weekday}, ngày {date}."},
+    {"q": ["kể chuyện cười", "kể chuyện vui", "nói gì vui đi", "cho nghe chuyện cười"],
+     "a": ["Lập trình viên đi siêu thị, vợ dặn: mua 1 hộp sữa, nếu có trứng thì mua 6. "
+           "Anh ta về nhà với 6 hộp sữa.",
+           "Có 10 loại người: người hiểu nhị phân và người không hiểu."]},
+
+    # ---- Python ----
+    C(["python in hello world", "python hello world", "viết chương trình python đầu tiên"],
+      "Python - in chữ ra màn hình:", "python", '''
+print("Hello, World!")
+ten = input("Bạn tên gì? ")
+print("Chào", ten)
+'''),
+    C(["python vòng lặp for while", "python for", "python while", "python lặp"],
+      "Python - vòng lặp:", "python", '''
+for i in range(1, 6):
+    print(i)
+
+n = 0
+while n < 3:
+    n += 1
+    print("n =", n)
+
+for ten in ["An", "Binh"]:
+    print(ten)
+'''),
+    C(["python hàm def", "python viết hàm", "python function"],
+      "Python - hàm:", "python", '''
+def cong(a, b=0):
+    return a + b
+
+print(cong(2, 3))
+print(cong(5))
+'''),
+    C(["python class lớp", "python oop hướng đối tượng"],
+      "Python - class:", "python", '''
+class Nguoi:
+    def __init__(self, ten):
+        self.ten = ten
+
+    def chao(self):
+        print("Xin chào, mình là", self.ten)
+
+Nguoi("An").chao()
+'''),
+    C(["python đọc ghi file", "python mở file", "python read write file"],
+      "Python - đọc/ghi file:", "python", '''
+with open("data.txt", "w", encoding="utf-8") as f:
+    f.write("Xin chào\\n")
+
+with open("data.txt", "r", encoding="utf-8") as f:
+    print(f.read())
+'''),
+    C(["python list dict danh sách từ điển", "python list", "python dictionary"],
+      "Python - list và dict:", "python", '''
+ds = [3, 1, 2]
+ds.append(5)
+ds.sort()
+print(ds)
+
+d = {"ten": "An", "tuoi": 20}
+d["lop"] = "10A"
+for k, v in d.items():
+    print(k, v)
+'''),
+
+    # ---- Lua / Roblox ----
+    C(["lua in hello world", "lua hello world", "lua print"],
+      "Lua - in chữ:", "lua", '''
+print("Hello, World!")
+local ten = "An"
+print("Chào " .. ten)
+'''),
+    C(["lua vòng lặp for while", "lua for", "lua while"],
+      "Lua - vòng lặp:", "lua", '''
+for i = 1, 5 do
+    print(i)
+end
+
+local n = 0
+while n < 3 do
+    n = n + 1
+end
+
+for _, v in ipairs({"a", "b"}) do
+    print(v)
+end
+'''),
+    C(["lua hàm function table bảng", "lua function", "lua table"],
+      "Lua - hàm và table:", "lua", '''
+local function cong(a, b)
+    return a + b
+end
+print(cong(2, 3))
+
+local nguoi = {ten = "An", tuoi = 20}
+nguoi.lop = "10A"
+for k, v in pairs(nguoi) do
+    print(k, v)
+end
+'''),
+    C(["roblox part touched chạm", "roblox script touched", "roblox part"],
+      "Roblox - Part bị chạm thì đổi màu (Script):", "lua", '''
+local part = workspace:WaitForChild("Part")
+part.Touched:Connect(function(hit)
+    if hit.Parent:FindFirstChildOfClass("Humanoid") then
+        part.BrickColor = BrickColor.new("Bright red")
+    end
+end)
+'''),
+    C(["roblox gui button nút bấm", "roblox button click", "roblox gui"],
+      "Roblox - nút GUI (LocalScript đặt trong TextButton):", "lua", '''
+local button = script.Parent
+button.MouseButton1Click:Connect(function()
+    button.Text = "Đã bấm!"
+end)
+'''),
+    C(["roblox tween di chuyển part", "roblox tween"],
+      "Roblox - Tween di chuyển Part:", "lua", '''
+local TweenService = game:GetService("TweenService")
+local part = workspace:WaitForChild("Part")
+local info = TweenInfo.new(2, Enum.EasingStyle.Quad)
+TweenService:Create(part, info, {Position = Vector3.new(0, 10, 0)}):Play()
+'''),
+
+    # ---- C++ ----
+    C(["c++ in hello world", "c++ hello world", "cpp hello world", "viết c++ đầu tiên"],
+      "C++ - in chữ:", "cpp", '''
+#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello, World!" << endl;
+    return 0;
+}
+'''),
+    C(["c++ vòng lặp for while", "c++ for", "cpp for while"],
+      "C++ - vòng lặp:", "cpp", '''
+#include <iostream>
+using namespace std;
+
+int main() {
+    for (int i = 1; i <= 5; i++) cout << i << " ";
+    int n = 0;
+    while (n < 3) { n++; }
+    cout << endl << n << endl;
+    return 0;
+}
+'''),
+    C(["c++ hàm function", "cpp hàm", "c++ viết hàm"],
+      "C++ - hàm:", "cpp", '''
+#include <iostream>
+using namespace std;
+
+int cong(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    cout << cong(2, 3) << endl;
+    return 0;
+}
+'''),
+    C(["c++ vector mảng", "cpp vector", "c++ mảng động"],
+      "C++ - vector:", "cpp", '''
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    vector<int> v = {3, 1, 2};
+    v.push_back(5);
+    sort(v.begin(), v.end());
+    for (int x : v) cout << x << " ";
+    return 0;
+}
+'''),
+    C(["c++ class lớp", "cpp class", "c++ oop"],
+      "C++ - class:", "cpp", '''
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Nguoi {
+public:
+    string ten;
+    Nguoi(string t) : ten(t) {}
+    void chao() { cout << "Xin chao, minh la " << ten << endl; }
+};
+
+int main() {
+    Nguoi a("An");
+    a.chao();
+    return 0;
+}
+'''),
+
+    # ---- HTML / CSS / JS ----
+    C(["html trang web cơ bản", "html khung trang", "html template", "html hello world"],
+      "HTML - khung trang cơ bản:", "html", '''
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trang của tôi</title>
+</head>
+<body>
+  <h1>Xin chào!</h1>
+  <p>Đây là trang web đầu tiên.</p>
+</body>
+</html>
+'''),
+    C(["html form biểu mẫu", "html input form", "html đăng nhập"],
+      "HTML - biểu mẫu:", "html", '''
+<form>
+  <label>Tên: <input type="text" name="ten"></label><br>
+  <label>Mật khẩu: <input type="password" name="mk"></label><br>
+  <button type="submit">Gửi</button>
+</form>
+'''),
+    C(["css nút bấm đẹp", "html css button", "css button"],
+      "HTML + CSS - nút bấm:", "html", '''
+<style>
+  .nut {
+    background: linear-gradient(90deg, #4a6cff, #00d6ff);
+    color: #fff; border: 0; padding: 10px 20px;
+    border-radius: 10px; font-weight: bold; cursor: pointer;
+  }
+  .nut:hover { filter: brightness(1.15); }
+</style>
+<button class="nut">Bấm vào đây</button>
+'''),
+    C(["javascript bấm nút dom sự kiện", "js onclick", "javascript click", "js dom"],
+      "JavaScript - bắt sự kiện bấm nút:", "js", '''
+<button id="btn">Bấm</button>
+<p id="kq"></p>
+<script>
+  let dem = 0;
+  document.getElementById("btn").addEventListener("click", function () {
+    dem++;
+    document.getElementById("kq").textContent = "Đã bấm " + dem + " lần";
+  });
+</script>
+'''),
+]
+
+
+# ═══════════ CHỈ MỤC TÌM KIẾM (TF-IDF) ═══════════
+class Index:
+    def __init__(self, entries):
+        self.entries = entries
+        self.build()
+
+    @staticmethod
+    def norm(v):
+        return math.sqrt(sum(x * x for x in v.values()))
+
+    def build(self):
+        pats = []
+        df = Counter()
+        for i, e in enumerate(self.entries):
+            for q in e["q"]:
+                c = Counter(tokens(q))
+                if c:
+                    pats.append((i, c))
+                    df.update(c.keys())
+        n = max(len(pats), 1)
+        self.idf = {t: math.log((n + 1) / (d + 0.5)) + 1 for t, d in df.items()}
+        self.vecs = []
+        for i, c in pats:
+            v = {t: tf * self.idf[t] for t, tf in c.items()}
+            self.vecs.append((i, v, self.norm(v)))
+
+    def search(self, text):
+        c = Counter(tokens(text))
+        v = {t: tf * self.idf.get(t, 1.0) for t, tf in c.items()}
+        nv = self.norm(v)
+        if nv == 0:
+            return None, 0.0
+        best, best_s = None, 0.0
+        for i, pv, pn in self.vecs:
+            if pn == 0:
+                continue
+            s = sum(w * pv.get(t, 0.0) for t, w in v.items()) / (nv * pn)
+            if s > best_s:
+                best, best_s = i, s
+        return best, best_s
+
+
+# ═══════════ WIKIPEDIA (không cần key) ═══════════
+UA = {"User-Agent": "OfflineAI/1.0 (hoc tap)"}
+
+
+def http_json(url, timeout=8):
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def wiki_lookup(query, lang):
+    q = urllib.parse.quote(query)
+    url = ("https://%s.wikipedia.org/w/api.php?action=opensearch&search=%s"
+           "&limit=1&namespace=0&format=json" % (lang, q))
+    data = http_json(url)
+    titles = data[1] if len(data) > 1 else []
+    if not titles:
+        return None
+    title = titles[0]
+    surl = "https://%s.wikipedia.org/api/rest_v1/page/summary/%s" % (
+        lang, urllib.parse.quote(title.replace(" ", "_")))
+    d = http_json(surl)
+    ext = (d.get("extract") or "").strip()
+    if not ext:
+        return None
+    if len(ext) > 700:
+        cut = ext[:700]
+        dot = cut.rfind(". ")
+        ext = cut[:dot + 1] if dot > 200 else cut + "..."
+    if d.get("type") == "disambiguation":
+        ext += " (trang có nhiều nghĩa, hãy hỏi cụ thể hơn)"
+    link = (d.get("content_urls") or {}).get("desktop", {}).get("page", "")
+    return "%s: %s" % (title, ext) + ("\nNguồn: " + link if link else "")
+
+
+def topic_of(text):
+    t = text.strip().rstrip("?!. ").lower()
+    t = re.sub(r"^(cho (tôi|mình|em) biết|hãy|làm ơn|giải thích|tra cứu|"
+               r"tìm hiểu|tìm kiếm|tìm|cho hỏi|hỏi)\s+", "", t)
+    t = re.sub(r"\s+(là gì|là ai|là sao|nghĩa là gì|ở đâu|như thế nào|là gì vậy|là gì thế)$", "", t)
+    return t.strip()
+
+
+def wiki_answer(text):
+    topic = topic_of(text)
+    if not topic or len(topic) > 80:
+        return None
+    for lang in ("vi", "en"):
+        try:
+            r = wiki_lookup(topic, lang)
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+            return None
+        if r:
+            return r
+    return None
+
+
+# ═══════════ AI ═══════════
+class Brain:
+    def __init__(self):
+        self.mem = {"ai": "Doraemon AI", "user": "bạn", "facts": []}
+        self.learned = []
+        self.web = True
+        self.pending = None
+        self.last_code = None
+        self.load()
+        self.reindex()
+
+    def load(self):
+        for path, target in ((MEM_FILE, "mem"), (KB_FILE, "kb")):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except (OSError, ValueError):
+                continue
+            if target == "mem" and isinstance(data, dict):
+                self.mem.update(data)
+            elif target == "kb" and isinstance(data, list):
+                self.learned = [e for e in data if isinstance(e, dict) and "q" in e and "a" in e]
+
+    def save(self):
+        for path, data in ((MEM_FILE, self.mem), (KB_FILE, self.learned)):
+            try:
+                tmp = path + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+                os.replace(tmp, path)
+            except OSError as e:
+                print("[!] Không lưu được %s: %s" % (path, e))
+
+    def reindex(self):
+        self.index = Index(SEED + self.learned)
+
+    def fmt(self, text):
+        now = datetime.now()
+        return (text.replace("{ai}", self.mem["ai"])
+                .replace("{user}", self.mem["user"])
+                .replace("{time}", now.strftime("%H:%M:%S"))
+                .replace("{date}", now.strftime("%d/%m/%Y"))
+                .replace("{weekday}", WEEKDAYS[now.weekday()]))
+
+    def teach(self, question, answer):
+        question, answer = question.strip(), answer.strip()
+        if not question or not answer:
+            return "Cần cả câu hỏi và câu trả lời."
+        self.learned.append({"q": [question], "a": answer})
+        self.save()
+        self.reindex()
+        self.pending = None
+        return "Đã học xong! Giờ hỏi lại thử đi."
+
+    def reply(self, text):
+        # tự nhận tên người dùng
+        m = re.search(r"(?:tên (?:tôi|mình|em) là|tôi tên là|mình tên là)\s+([^\s,.!?]+)", text.lower())
+        if m:
+            self.mem["user"] = m.group(1).capitalize()
+            self.save()
+            return "Rất vui được gặp %s!" % self.mem["user"]
+
+        calc = calc_from_text(text)
+        if calc:
+            return calc
+
+        idx, score = self.index.search(text)
+        if idx is not None and score >= 0.35:
+            e = (SEED + self.learned)[idx]
+            ans = e["a"]
+            if isinstance(ans, list):
+                ans = random.choice(ans)
+            out = self.fmt(ans)
+            if e.get("code"):
+                out += "\n\n" + e["code"]
+                self.last_code = (e.get("lang", "txt"), e["code"])
+            if score < 0.5:
+                out = "(Mình đoán bạn hỏi: \"%s\")\n%s" % (e["q"][0], out)
+            return out
+
+        if self.web:
+            w = wiki_answer(text)
+            if w:
+                return w
+
+        self.pending = text
+        return ("Mình chưa biết câu này. Dạy mình bằng: /day <câu trả lời>\n"
+                "(hoặc /day câu hỏi => câu trả lời)")
+
+
+# ═══════════ GIAO DIỆN DÒNG LỆNH ═══════════
+HELP = """Lệnh:
+  /day <hỏi> => <đáp>   dạy AI (hoặc /day <đáp> sau khi AI nói chưa biết)
+  /ds                   xem những câu đã dạy
+  /bo <số>              xóa một câu đã dạy
+  /code                 xem các mẫu code có sẵn
+  /luu [tên]            lưu code vừa trả lời vào thư mục ai_code
+  /wiki <từ khóa>       tra Wikipedia trực tiếp
+  /web on|off           bật/tắt tra internet
+  /nho <nội dung>       ghi nhớ một điều
+  /sotay                xem sổ tay
+  /quen <số>            xóa một mục sổ tay
+  /doiten <tên>         đổi tên AI
+  /thoat                thoát
+Thử hỏi: "python vòng lặp", "c++ vector", "roblox gui button", "2+3*4", "sqrt(144)", "Hà Nội là gì" """
+
+
+def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
+    ai = Brain()
+    print("=" * 44)
+    print("  %s - OFFLINE, không cần API key" % ai.mem["ai"])
+    print("=" * 44)
+    print("Gõ /help để xem lệnh. Gõ /thoat để thoát.\n")
+
+    while True:
+        try:
+            text = input("Bạn: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nTạm biệt!")
+            break
+        if not text:
+            continue
+        low = text.lower()
+
+        if low in ("/thoat", "/exit", "thoát", "tắt"):
+            print("[%s]: Tạm biệt!" % ai.mem["ai"])
+            break
+        if low == "/help":
+            print(HELP)
+            continue
+        if low.startswith("/day"):
+            arg = text[4:].strip()
+            if "=>" in arg:
+                q, a = arg.split("=>", 1)
+                print("[%s]: %s" % (ai.mem["ai"], ai.teach(q, a)))
+            elif ai.pending and arg:
+                print("[%s]: %s" % (ai.mem["ai"], ai.teach(ai.pending, arg)))
+            else:
+                print("Dùng: /day câu hỏi => câu trả lời")
+            continue
+        if low == "/ds":
+            if not ai.learned:
+                print("Chưa dạy câu nào.")
+            for i, e in enumerate(ai.learned, 1):
+                print("  %d. %s => %s" % (i, e["q"][0], str(e["a"])[:60]))
+            continue
+        if low.startswith("/bo"):
+            arg = text[3:].strip()
+            if arg.isdigit() and 1 <= int(arg) <= len(ai.learned):
+                ai.learned.pop(int(arg) - 1)
+                ai.save()
+                ai.reindex()
+                print("Đã xóa.")
+            else:
+                print("Dùng: /bo <số trong /ds>")
+            continue
+        if low == "/code":
+            for e in SEED:
+                if e.get("code"):
+                    print("  [%s] %s" % (e["lang"], e["q"][0]))
+            continue
+        if low.startswith("/luu"):
+            if not ai.last_code:
+                print("Chưa có code nào để lưu.")
+                continue
+            lang, code = ai.last_code
+            os.makedirs(CODE_DIR, exist_ok=True)
+            base = re.sub(r"[^\w-]", "_", text[4:].strip()) or "code_" + datetime.now().strftime("%H%M%S")
+            path = os.path.join(CODE_DIR, "%s.%s" % (base, EXT.get(lang, "txt")))
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(code + "\n")
+            print("Đã lưu:", path)
+            continue
+        if low.startswith("/wiki"):
+            q = text[5:].strip()
+            r = wiki_answer(q) if q else None
+            print(r or "Không tra được (mất mạng hoặc không có kết quả).")
+            continue
+        if low.startswith("/web"):
+            arg = text[4:].strip().lower()
+            if arg in ("on", "off"):
+                ai.web = (arg == "on")
+                print("Tra internet:", arg.upper())
+            else:
+                print("Dùng: /web on hoặc /web off")
+            continue
+        if low.startswith("/nho"):
+            fact = text[4:].strip()
+            if fact:
+                ai.mem["facts"].append(fact)
+                ai.save()
+                print("Đã ghi nhớ.")
+            continue
+        if low == "/sotay":
+            if not ai.mem["facts"]:
+                print("Sổ tay trống.")
+            for i, f in enumerate(ai.mem["facts"], 1):
+                print("  %d. %s" % (i, f))
+            continue
+        if low.startswith("/quen"):
+            arg = text[5:].strip()
+            if arg.isdigit() and 1 <= int(arg) <= len(ai.mem["facts"]):
+                ai.mem["facts"].pop(int(arg) - 1)
+                ai.save()
+                print("Đã xóa.")
+            else:
+                print("Dùng: /quen <số trong /sotay>")
+            continue
+        if low.startswith("/doiten"):
+            name = text[7:].strip()
+            if name:
+                ai.mem["ai"] = name
+                ai.save()
+                print("Đã đổi tên thành", name)
+            continue
+
+        print("[%s]: %s\n" % (ai.mem["ai"], ai.reply(text)))
+
+
+if __name__ == "__main__":
+    main()
