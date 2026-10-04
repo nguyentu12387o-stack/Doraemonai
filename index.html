@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Doraemon AI Pro</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    background:#0d1117;
+    color:#e6edf3;
+    font-family:Arial,sans-serif;
+}
+
+.app{
+    width:100%;
+    max-width:900px;
+    height:100vh;
+    margin:auto;
+    display:flex;
+    flex-direction:column;
+    background:#161b22;
+}
+
+header{
+    height:70px;
+    display:flex;
+    align-items:center;
+    padding:10px 18px;
+    border-bottom:1px solid #30363d;
+    background:#11161d;
+}
+
+.logo{
+    font-size:38px;
+    margin-right:12px;
+}
+
+.title{
+    font-size:20px;
+    font-weight:bold;
+}
+
+.status{
+    margin-top:4px;
+    color:#00d6ff;
+    font-size:12px;
+}
+
+#chat{
+    flex:1;
+    overflow-y:auto;
+    padding:20px;
+}
+
+.msg{
+    max-width:85%;
+    margin:12px 0;
+    padding:13px 16px;
+    border-radius:15px;
+    line-height:1.55;
+    white-space:pre-wrap;
+    word-break:break-word;
+}
+
+.ai{
+    background:#21262d;
+    border:1px solid #30363d;
+}
+
+.user{
+    margin-left:auto;
+    background:#075985;
+}
+
+.name{
+    font-weight:bold;
+    margin-bottom:5px;
+}
+
+.inputbox{
+    display:flex;
+    gap:8px;
+    padding:12px;
+    border-top:1px solid #30363d;
+    background:#11161d;
+}
+
+#input{
+    flex:1;
+    min-width:0;
+    padding:14px;
+    border:1px solid #30363d;
+    border-radius:12px;
+    outline:none;
+    background:#21262d;
+    color:white;
+    font-size:16px;
+}
+
+#input:focus{
+    border-color:#00d6ff;
+}
+
+button{
+    border:0;
+    border-radius:12px;
+    padding:0 20px;
+    background:#00d6ff;
+    color:#001014;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:active{
+    transform:scale(.97);
+}
+
+.typing{
+    color:#8b949e;
+    font-style:italic;
+}
+
+.code{
+    background:#0d1117;
+    border:1px solid #30363d;
+    padding:12px;
+    border-radius:10px;
+    overflow:auto;
+    margin-top:8px;
+    font-family:monospace;
+}
+
+@media(max-width:600px){
+    .msg{max-width:92%}
+    .title{font-size:17px}
+    button{padding:0 15px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header>
+    <div class="logo">🤖</div>
+    <div>
+        <div class="title" id="aiName">Doraemon AI Pro</div>
+        <div class="status">● Online</div>
+    </div>
+</header>
+
+<main id="chat"></main>
+
+<div class="inputbox">
+    <input id="input"
+           placeholder="Nhập câu hỏi..."
+           autocomplete="off">
+    <button onclick="send()">Gửi ➤</button>
+</div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   DORAEMON AI PRO
+   WEB EDITION V1
+   ========================================================= */
+
+const AI_NAME = "Doraemon AI Pro";
+
+let memory = JSON.parse(
+    localStorage.getItem("doraemon_memory") || "{}"
+);
+
+let history = JSON.parse(
+    localStorage.getItem("doraemon_history") || "[]"
+);
+
+let knowledge = JSON.parse(
+    localStorage.getItem("doraemon_knowledge") || "[]"
+);
+
+
+/* =========================
+   HIỂN THỊ
+   ========================= */
+
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+
+function save(){
+
+    localStorage.setItem(
+        "doraemon_memory",
+        JSON.stringify(memory)
+    );
+
+    localStorage.setItem(
+        "doraemon_history",
+        JSON.stringify(history.slice(-100))
+    );
+
+    localStorage.setItem(
+        "doraemon_knowledge",
+        JSON.stringify(knowledge)
+    );
+}
+
+
+function addMessage(role,text){
+
+    const div = document.createElement("div");
+
+    div.className =
+        "msg " + (role === "user" ? "user" : "ai");
+
+    const name =
+        role === "user" ? "Bạn" : AI_NAME;
+
+    div.innerHTML =
+        `<div class="name">${name}</div>
+         <div>${escapeHTML(text)}</div>`;
+
+    chat.appendChild(div);
+
+    chat.scrollTop = chat.scrollHeight;
+}
+
+
+function escapeHTML(text){
+
+    const div = document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+}
+
+
+/* =========================
+   LỊCH SỬ
+   ========================= */
+
+function loadHistory(){
+
+    if(history.length === 0){
+
+        addMessage(
+            "ai",
+            "Xin chào! 👋\n\n" +
+            "Mình là Doraemon AI Pro.\n" +
+            "Bạn có thể hỏi mình, dạy mình bằng /day hoặc dùng /help."
+        );
+
+        return;
+    }
+
+    history.forEach(x=>{
+        addMessage(x.role,x.text);
+    });
+}
+
+
+/* =========================
+   TOKEN / TÌM KIẾN THỨC
+   ========================= */
+
+function normalize(text){
+
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"")
+        .replace(/đ/g,"d");
+}
+
+
+function similarity(a,b){
+
+    const A = new Set(normalize(a).split(/\s+/));
+    const B = new Set(normalize(b).split(/\s+/));
+
+    let same = 0;
+
+    A.forEach(x=>{
+        if(B.has(x)) same++;
+    });
+
+    if(A.size === 0 || B.size === 0)
+        return 0;
+
+    return same / Math.max(A.size,B.size);
+}
+
+
+/* =========================
+   MÁY TÍNH
+   ========================= */
+
+function calculator(text){
+
+    let s = normalize(text)
+        .replace(/tinh/g,"")
+        .replace(/bang/g,"")
+        .replace(/=/g,"")
+        .replace(/\?/g,"")
+        .trim();
+
+    if(!/[0-9]/.test(s))
+        return null;
+
+    if(!/[+\-*\/%]/.test(s))
+        return null;
+
+    if(!/^[0-9+\-*\/%().\s]+$/.test(s))
+        return null;
+
+    try{
+
+        /*
+         * Chỉ cho phép các ký tự toán học.
+         * Không cho chạy JavaScript tùy ý.
+         */
+
+        const result = Function(
+            '"use strict";return (' + s + ')'
+        )();
+
+        if(!Number.isFinite(result))
+            return null;
+
+        return "🧮 Kết quả: " + result;
+
+    }catch(e){
+
+        return null;
+    }
+}
+
+
+/* =========================
+   BRAIN
+   ========================= */
+
+function think(text){
+
+    const q = normalize(text);
+
+    /* HELP */
+
+    if(q === "/help"){
+
+        return `📚 HƯỚNG DẪN
+
+/day câu hỏi => câu trả lời
+→ Dạy AI kiến thức mới.
+
+/history
+→ Xem lịch sử.
+
+/clear
+→ Xóa cuộc trò chuyện.
+
+/memory
+→ Xem bộ nhớ.
+
+/name tên mới
+→ Đổi tên AI.
+
+Bạn cũng có thể hỏi các câu thông thường.`;
+
+    }
+
+
+    /* CLEAR */
+
+    if(q === "/clear"){
+
+        history = [];
+
+        save();
+
+        chat.innerHTML = "";
+
+        return "🧹 Đã xóa lịch sử cuộc trò chuyện.";
+
+    }
+
+
+    /* MEMORY */
+
+    if(q === "/memory"){
+
+        return JSON.stringify(
+            memory,
+            null,
+            2
+        );
+
+    }
+
+
+    /* NAME */
+
+    if(q.startsWith("/name ")){
+
+        const name =
+            text.substring(6).trim();
+
+        if(name){
+
+            memory.aiName = name;
+
+            save();
+
+            document.getElementById(
+                "aiName"
+            ).textContent = name;
+
+            return "🤖 Đã đổi tên AI thành: " + name;
+        }
+
+    }
+
+
+    /* CALCULATOR */
+
+    const calc = calculator(text);
+
+    if(calc)
+        return calc;
+
+
+    /* KIẾN THỨC ĐÃ HỌC */
+
+    let best = null;
+    let bestScore = 0;
+
+    for(const item of knowledge){
+
+        const score =
+            similarity(text,item.q);
+
+        if(score > bestScore){
+
+            bestScore = score;
+            best = item;
+        }
+    }
+
+    if(best && bestScore >= 0.35){
+
+        return best.a;
+    }
+
+
+    /* CHÀO */
+
+    if(
+        q.includes("xin chao") ||
+        q === "chao" ||
+        q === "hello" ||
+        q === "hi"
+    ){
+
+        return "Chào bạn! 👋 Mình đang hoạt động. Bạn muốn mình làm gì?";
+
+    }
+
+
+    /* AI CƠ BẢN */
+
+    if(q.includes("ban la ai")){
+
+        return "Mình là " +
+            (memory.aiName || AI_NAME) +
+            ", phiên bản Web V1.";
+
+    }
+
+
+    if(
+        q.includes("ban lam duoc gi") ||
+        q.includes("lam duoc gi")
+    ){
+
+        return `Mình hiện có:
+
+• Chat cơ bản
+• Bộ nhớ trình duyệt
+• Học bằng /day
+• Máy tính
+• Lịch sử chat
+• Chạy trực tiếp trên trình duyệt
+
+Ở bước tiếp theo mình sẽ gắn AI model thật để khả năng suy luận mạnh hơn.`;
+
+    }
+
+
+    return `Mình đã nhận được câu hỏi:
+
+"${text}"
+
+🧠 Hiện tại mình đang ở phiên bản Web V1 nên phần suy luận vẫn còn cơ bản.
+
+Ở phiên bản tiếp theo, mình sẽ được kết nối với AI model thật + Memory + Web Search.`;
+
+}
+
+
+/* =========================
+   COMMAND /DAY
+   ========================= */
+
+function command(text){
+
+    if(!text.startsWith("/day "))
+        return null;
+
+    const body =
+        text.substring(5);
+
+    const parts =
+        body.split("=>");
+
+    if(parts.length < 2){
+
+        return "❌ Sai cú pháp.\n\n" +
+               "Dùng:\n" +
+               "/day câu hỏi => câu trả lời";
+
+    }
+
+    const q =
+        parts[0].trim();
+
+    const a =
+        parts.slice(1)
+             .join("=>")
+             .trim();
+
+    if(!q || !a){
+
+        return "❌ Câu hỏi hoặc câu trả lời đang trống.";
+
+    }
+
+    knowledge.push({
+        q:q,
+        a:a,
+        time:new Date().toISOString()
+    });
+
+    save();
+
+    return "✅ Đã học kiến thức mới:\n\n" +
+           q + " => " + a;
+
+}
+
+
+/* =========================
+   GỬI
+   ========================= */
+
+function send(){
+
+    const text =
+        input.value.trim();
+
+    if(!text)
+        return;
+
+    input.value = "";
+
+    addMessage("user",text);
+
+    history.push({
+        role:"user",
+        text:text
+    });
+
+
+    /* DAY */
+
+    if(text.startsWith("/day ")){
+
+        const response =
+            command(text);
+
+        addMessage("ai",response);
+
+        history.push({
+            role:"ai",
+            text:response
+        });
+
+        save();
+
+        return;
+    }
+
+
+    /* AI THINK */
+
+    addMessage(
+        "ai",
+        "🧠 Đang suy nghĩ..."
+    );
+
+    const thinkingMessage =
+        chat.lastElementChild;
+
+
+    setTimeout(()=>{
+
+        const response =
+            think(text);
+
+        thinkingMessage.remove();
+
+        addMessage("ai",response);
+
+        history.push({
+            role:"ai",
+            text:response
+        });
+
+        save();
+
+    },350);
+
+}
+
+
+input.addEventListener(
+    "keydown",
+    function(e){
+
+        if(e.key === "Enter")
+            send();
+
+    }
+);
+
+
+loadHistory();
+
+</script>
+
+</body>
+  </html>
