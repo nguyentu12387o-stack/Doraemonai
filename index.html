@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Doraemon AI Pro V2 Ultimate - Expanded</title>
+<style>
+*{box-sizing:border-box}
+:root{
+    --bg-primary:#0d1117; --bg-secondary:#161b22; --bg-header:#11161d;
+    --bg-message:#21262d; --bg-user:#075985; --border:#30363d;
+    --text-primary:#e6edf3; --text-secondary:#8b949e;
+    --accent:#00d6ff; --accent-hover:#00b8e0; --success:#3fb950;
+}
+body.light{
+    --bg-primary:#ffffff; --bg-secondary:#f6f8fa; --bg-header:#f0f2f4;
+    --bg-message:#ffffff; --bg-user:#0066cc; --border:#d0d7de;
+    --text-primary:#24292f; --text-secondary:#57606a; --accent:#0066cc; --accent-hover:#0052a3;
+}
+body{margin:0;background:var(--bg-primary);color:var(--text-primary);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;transition:all 0.3s ease;}
+.app{width:100%;max-width:900px;height:100vh;margin:auto;display:flex;flex-direction:column;background:var(--bg-secondary);}
+header{height:70px;display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--border);background:var(--bg-header);}
+.header-left{display:flex;align-items:center;gap:12px;}
+.logo{font-size:38px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.title{font-size:20px;font-weight:bold;background:linear-gradient(135deg,var(--accent),#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.status{margin-top:4px;color:var(--success);font-size:12px;display:flex;align-items:center;gap:5px;}
+.status::before{content:"";width:8px;height:8px;background:var(--success);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.header-actions{display:flex;gap:8px;}
+.icon-btn{background:transparent;border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:16px;transition:all 0.2s;}
+.icon-btn:hover{background:var(--bg-message);border-color:var(--accent);transform:translateY(-2px);}
+#chat{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;}
+.msg{max-width:85%;padding:13px 16px;border-radius:15px;line-height:1.6;white-space:pre-wrap;word-break:break-word;animation:slideIn 0.3s ease;position:relative;}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.ai{background:var(--bg-message);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:5px;}
+.user{align-self:flex-end;background:var(--bg-user);color:white;border-bottom-right-radius:5px;}
+.name{font-weight:bold;margin-bottom:5px;font-size:13px;opacity:0.9;}
+.time{font-size:11px;opacity:0.6;margin-top:5px;}
+.inputbox{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--bg-header);position:relative;}
+#input{flex:1;min-width:0;padding:14px;border:1px solid var(--border);border-radius:12px;outline:none;background:var(--bg-message);color:var(--text-primary);font-size:16px;transition:all 0.2s;}
+#input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,214,255,0.1);}
+button{border:0;border-radius:12px;padding:0 20px;background:var(--accent);color:#001014;font-weight:bold;cursor:pointer;transition:all 0.2s;}
+button:hover{background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,214,255,0.3);}
+button:active{transform:scale(0.97);}
+.typing{color:var(--text-secondary);font-style:italic;font-size:13px;}
+.code{background:var(--bg-primary);border:1px solid var(--border);padding:12px;border-radius:8px;overflow-x:auto;margin-top:8px;font-family:'Consolas','Monaco',monospace;font-size:13px;position:relative;}
+.code-lang{position:absolute;top:0;right:0;background:var(--accent);color:#000;padding:2px 8px;font-size:11px;font-weight:bold;border-radius:0 8px 0 8px;}
+.suggestions{position:absolute;bottom:100%;left:0;right:0;background:var(--bg-message);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;max-height:200px;overflow-y:auto;display:none;z-index:10;}
+.suggestion-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.2s;}
+.suggestion-item:hover{background:var(--bg-header);}
+.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+.modal.show{display:flex;}
+.modal-content{background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;animation:modalSlide 0.3s ease;}
+@keyframes modalSlide{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:20px;font-weight:bold;}
+.close-btn{background:transparent;border:none;color:var(--text-secondary);font-size:24px;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}
+.close-btn:hover{color:var(--text-primary);background:transparent;transform:none;box-shadow:none;}
+.knowledge-item{background:var(--bg-message);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;}
+.knowledge-q{color:var(--accent);font-weight:bold;margin-bottom:6px;}
+.delete-btn{background:#f85149;color:white;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:8px;}
+@media(max-width:600px){.msg{max-width:92%}.title{font-size:17px}button{padding:0 15px}.header-actions{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+    <div class="header-left">
+        <div class="logo">🤖</div>
+        <div>
+            <div class="title" id="aiName">Doraemon AI V2 Ultimate</div>
+            <div class="status">Online • Bộ não mở rộng đã được nạp</div>
+        </div>
+    </div>
+    <div class="header-actions">
+        <button class="icon-btn" onclick="toggleTheme()" title="Đổi theme">🌓</button>
+        <button class="icon-btn" onclick="showHistory()" title="Lịch sử">📜</button>
+        <button class="icon-btn" onclick="showKnowledge()" title="Kiến thức">🧠</button>
+        <button class="icon-btn" onclick="exportData()" title="Xuất dữ liệu">💾</button>
+    </div>
+</header>
+<main id="chat"></main>
+<div class="inputbox">
+    <div class="suggestions" id="suggestions"></div>
+    <input id="input" placeholder="Hỏi về Lua, Roblox, hoặc gõ /help..." autocomplete="off">
+    <button onclick="send()">Gửi ➤</button>
+</div>
+</div>
+
+<div class="modal" id="historyModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">📜 Lịch sử trò chuyện</div>
+            <button class="close-btn" onclick="closeModal('historyModal')">&times;</button>
+        </div>
+        <div id="historyContent"></div>
+    </div>
+</div>
+
+<div class="modal" id="knowledgeModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">🧠 Kiến thức đã học</div>
+            <button class="close-btn" onclick="closeModal('knowledgeModal')">&times;</button>
+        </div>
+        <div id="knowledgeContent"></div>
+    </div>
+</div>
+
+<script>
+const AI_NAME = "Doraemon AI V2 Ultimate";
+const VERSION = "2.0 Ultimate Expanded";
+
+let memory = JSON.parse(localStorage.getItem("doraemon_memory") || "{}");
+let history = JSON.parse(localStorage.getItem("doraemon_history") || "[]");
+let knowledge = JSON.parse(localStorage.getItem("doraemon_knowledge") || "[]");
+
+// === BỘ NÃO OFFLINE MỞ RỘNG VỀ LUA & ROBLOX ===
+const SEED_KNOWLEDGE = [
+    {q: ["lua là gì", "ngôn ngữ lua", "lua programming"], a: "## 📘 Lua là gì?\n\nLua là một ngôn ngữ lập trình kịch bản (scripting language) nhẹ, nhanh và cực kỳ mạnh mẽ, được thiết kế để nhúng vào các ứng dụng khác.\n\n### Đặc điểm chính:\n- **Nhẹ và nhanh**: Lua có kích thước nhỏ và tốc độ thực thi rất cao\n- **Dễ nhúng**: Được tích hợp vào nhiều game engine (Roblox, Corona, Love2D...)\n- **Cú pháp đơn giản**: Dễ học, dễ đọc\n\n### Trong Roblox:\nRoblox sử dụng **Luau** - một phiên bản mở rộng của Lua 5.1 với nhiều cải tiến:\n- Hiệu năng tốt hơn\n- Type checking (kiểm tra kiểu dữ liệu)\n- Nhiều hàm built-in hơn\n\n```lua\n-- Ví dụ Lua cơ bản\nlocal ten = \"Doraemon\"\nlocal tuoi = 10\nprint(\"Xin chào, mình là \" .. ten .. \" \" .. tuoi .. \" tuổi!\")\n```"},
+    
+    {q: ["biến trong lua", "cách khai báo biến lua", "variable lua"], a: "##  Biến trong Lua\n\nBiến là nơi lưu trữ dữ liệu để sử dụng lại trong chương trình.\n\n### Cách khai báo:\n```lua\n-- Biến cục bộ (KHUYÊN DÙNG)\nlocal ten = \"Doraemon\"\nlocal tuoi = 10\nlocal diem = 9.5\nlocal dangHoatDong = true\n\n-- Biến toàn cục (HẠN CHẾ dùng)\nbiensToanCuc = \"Không tốt\"\n```\n\n### Các kiểu dữ liệu:\n```lua\nlocal chuoi = \"Xin chào\"      -- String (chuỗi)\nlocal so = 42                  -- Number (số)\nlocal boolean = true           -- Boolean (đúng/sai)\nlocal bang = {1, 2, 3}        -- Table (bảng)\nlocal khongCoGi = nil          -- Nil (không có giá trị)\n```\n\n### Quy tắc đặt tên:\n- ✅ `local playerScore`\n- ✅ `local ten_nguoi_choi`\n- ❌ `local 123abc` (không bắt đầu bằng số)\n- ❌ `local end` (không dùng từ khóa reserved)\n\n### Nối chuỗi:\n```lua\nlocal ho = \"Nguyễn\"\nlocal ten = \"Văn A\"\nlocal hoTen = ho .. \" \" .. ten  -- Dùng .. để nối\nprint(hoTen)  -- Output: Nguyễn Văn A\n```"},
+    
+    {q: ["vòng lặp for trong lua", "for i in lua", "loop lua"], a: "## 🔄 Vòng lặp trong Lua\n\nVòng lặp giúp thực hiện lặp đi lặp lại một đoạn code.\n\n### 1. Vòng lặp for số học:\n```lua\n-- Đếm từ 1 đến 10\nfor i = 1, 10 do\n    print(\"Lần thứ:\", i)\nend\n\n-- Đếm từ 1 đến 10, mỗi lần tăng 2\nfor i = 1, 10, 2 do\n    print(i)  -- 1, 3, 5, 7, 9\nend\n\n-- Đếm ngược từ 10 về 1\nfor i = 10, 1, -1 do\n    print(i)  -- 10, 9, 8, 7...1\nend\n```\n\n### 2. Vòng lặp for với bảng (ipairs):\n```lua\nlocal fruits = {\"Táo\", \"Cam\", \"Xoài\", \"Nho\"}\n\nfor index, value in ipairs(fruits) do\n    print(index .. \". \" .. value)\nend\n-- Output:\n-- 1. Táo\n-- 2. Cam\n-- 3. Xoài\n-- 4. Nho\n```\n\n### 3. Vòng lặp while:\n```lua\nlocal dem = 1\nwhile dem <= 5 do\n    print(\"Đếm:\", dem)\n    dem = dem + 1  -- QUAN TRỌNG: phải tăng biến đếm\nend\n```\n\n### 4. Vòng lặp repeat-until:\n```lua\nlocal input = \"\"\nrepeat\n    input = io.read()\n    print(\"Bạn nhập:\", input)\nuntil input == \"thoat\"\n```\n\n### ⚠️ Lưu ý:\n- Luôn có điều kiện dừng để tránh vòng lặp vô hạn\n- Dùng `break` để thoát vòng lặp sớm\n- Dùng `continue` (trong Luau) để bỏ qua lượt lặp hiện tại"},
+    
+    {q: ["hàm function trong lua", "cách tạo hàm lua", "function lua"], a: "## 🔧 Hàm (Function) trong Lua\n\nHàm là một khối code có thể tái sử dụng, giúp code gọn gàng và dễ bảo trì.\n\n### Cách tạo hàm:\n```lua\n-- Cách 1: Dùng function\nfunction xinChao(ten)\n    print(\"Xin chào, \" .. ten .. \"!\")\nend\n\n-- Cách 2: Dùng local function (KHUYÊN DÙNG)\nlocal function tinhTong(a, b)\n    return a + b\nend\n\n-- Gọi hàm\nxinChao(\"Doraemon\")  -- Output: Xin chào, Doraemon!\nlocal ketQua = tinhTong(5, 3)  -- ketQua = 8\n```\n\n### Hàm với nhiều giá trị trả về:\n```lua\nlocal function tinhToan(a, b)\n    local tong = a + b\n    local hieu = a - b\n    local tich = a * b\n    return tong, hieu, tich\nend\n\nlocal t, h, ti = tinhToan(10, 5)\nprint(t, h, ti)  -- 15  5  50\n```\n\n### Hàm với giá trị mặc định:\n```lua\nlocal function chaoHoi(ten, loiChao)\n    loiChao = loiChao or \"Xin chào\"  -- Nếu không truyền, dùng \"Xin chào\"\n    print(loiChao .. \", \" .. ten .. \"!\")\nend\n\nchaoHoi(\"An\")              -- Xin chào, An!\nchaoHoi(\"Bình\", \"Chào\")    -- Chào, Bình!\n```\n\n### Hàm ẩn danh (Anonymous Function):\n```lua\nlocal cong = function(a, b)\n    return a + b\nend\n\nprint(cong(3, 4))  -- 7\n```\n\n### Closure (Hàm trong hàm):\n```lua\nlocal function taoBoDem()\n    local dem = 0\n    return function()\n        dem = dem + 1\n        return dem\n    end\nend\n\nlocal demCuaToi = taoBoDem()\nprint(demCuaToi())  -- 1\nprint(demCuaToi())  -- 2\nprint(demCuaToi())  -- 3\n```\n\n### ⚡ Best Practices:\n- Luôn dùng `local function` thay vì `function`\n- Đặt tên hàm rõ ràng, mô tả chức năng\n- Giữ hàm ngắn gọn, mỗi hàm chỉ làm một việc\n- Dùng comment để giải thích hàm phức tạp"},
+    
+    {q: ["table trong lua là gì", "mảng lua", "dictionary lua", "bảng lua"], a: "## 📊 Table trong Lua\n\nTable là cấu trúc dữ liệu **duy nhất** trong Lua, nhưng cực kỳ linh hoạt. Nó có thể làm cả **Mảng (Array)** và **Từ điển (Dictionary)**.\n\n### 1. Table dạng Mảng (Array):\n```lua\n-- Tạo mảng\nlocal fruits = {\"Táo\", \"Cam\", \"Xoài\"}\nlocal numbers = {1, 2, 3, 4, 5}\n\n-- Truy cập (index bắt đầu từ 1, không phải 0!)\nprint(fruits[1])  -- Táo\nprint(fruits[2])  -- Cam\n\n-- Độ dài mảng\nprint(#fruits)  -- 3\n\n-- Thêm phần tử\ntable.insert(fruits, \"Nho\")\nprint(fruits[4])  -- Nho\n\n-- Xóa phần tử\ntable.remove(fruits, 2)  -- Xóa \"Cam\"\n```\n\n### 2. Table dạng Từ điển (Dictionary):\n```lua\n-- Tạo dictionary\nlocal player = {\n    ten = \"Doraemon\",\n    tuoi = 10,\n    diem = 9.5,\n    dangHoatDong = true\n}\n\n-- Truy cập\nprint(player.ten)      -- Doraemon\nprint(player[\"tuoi\"])  -- 10\n\n-- Thêm/sửa\nplayer.lop = \"5A\"\nplayer.diem = 10\n\n-- Xóa\nplayer.dangHoatDong = nil\n```\n\n### 3. Table lồng nhau:\n```lua\nlocal lopHoc = {\n    {\n        ten = \"An\",\n        diem = {Toan = 9, Ly = 8, Hoa = 7}\n    },\n    {\n        ten = \"Bình\",\n        diem = {Toan = 8, Ly = 9, Hoa = 10}\n    }\n}\n\nprint(lopHoc[1].ten)              -- An\nprint(lopHoc[2].diem.Hoa)         -- 10\n```\n\n### 4. Duyệt table:\n```lua\n-- Với mảng (ipairs - theo thứ tự)\nlocal arr = {\"a\", \"b\", \"c\"}\nfor i, v in ipairs(arr) do\n    print(i, v)\nend\n\n-- Với dictionary (pairs - không theo thứ tự)\nlocal dict = {ten = \"An\", tuoi = 15}\nfor key, value in pairs(dict) do\n    print(key, value)\nend\n```\n\n### 5. Các hàm hữu ích với table:\n```lua\nlocal t = {3, 1, 4, 1, 5, 9}\n\n-- Sắp xếp\ntable.sort(t)\nprint(t[1])  -- 1\n\n-- Nối chuỗi từ table\nlocal words = {\"Xin\", \"chào\", \"mọi\", \"người\"}\nlocal sentence = table.concat(words, \" \")\nprint(sentence)  -- Xin chào mọi người\n\n-- Copy table\nlocal copy = {}\nfor k, v in pairs(t) do\n    copy[k] = v\nend\n```\n\n### ⚠️ Lưu ý quan trọng:\n- Index trong Lua bắt đầu từ **1**, không phải 0 như các ngôn ngữ khác\n- `#table` chỉ hoạt động với mảng, không đếm được dictionary\n- Table là **reference type**, gán table chỉ gán tham chiếu, không copy"},
+    
+    {q: ["script và localscript khác nhau", "server client roblox", "roblox scripting"], a: "## 🎮 Script vs LocalScript trong Roblox\n\nĐây là khái niệm **cực kỳ quan trọng** khi lập trình Roblox!\n\n### Script (Server Script):\n- **Chạy trên Server** (máy chủ của Roblox)\n- **Mọi người chơi đều thấy** kết quả\n- Dùng cho: lưu dữ liệu, xử lý game logic, spawn NPC...\n- Đặt trong: `ServerScriptService`, `Workspace`\n\n```lua\n-- Server Script\nlocal Players = game:GetService(\"Players\")\n\nPlayers.PlayerAdded:Connect(function(player)\n    print(player.Name .. \" vừa vào game!\")\n    -- Tất cả người chơi đều thấy message này trong console server\nend)\n```\n\n### LocalScript:\n- **Chạy trên Client** (máy của từng người chơi)\n- **Chỉ người chơi đó thấy** kết quả\n- Dùng cho: GUI, xử lý input, hiệu ứng âm thanh...\n- Đặt trong: `StarterPlayerScripts`, `StarterGui`, `StarterCharacterScripts`\n\n```lua\n-- LocalScript\nlocal player = game.Players.LocalPlayer\nlocal mouse = player:GetMouse()\n\nmouse.Button1Click:Connect(function()\n    print(\"Bạn đã click chuột!\")\n    -- Chỉ bạn thấy message này\nend)\n```\n\n### So sánh chi tiết:\n\n| Tính năng | Script | LocalScript |\n|-----------|--------|-------------|\n| Nơi chạy | Server | Client |\n| Phạm vi | Toàn bộ server | Chỉ người chơi đó |\n| Truy cập | Mọi thứ trong game | Chỉ những gì client thấy |\n| Bảo mật | Cao (không bị hack) | Thấp (có thể bị exploit) |\n| Dùng cho | Game logic, DataStore | GUI, Input, Camera |\n\n### ⚠️ Quy tắc vàng:\n1. **KHÔNG** tin tưởng LocalScript - người chơi có thể modify\n2. **LUÔN** validate dữ liệu từ client ở server\n3. **KHÔNG** để logic quan trọng (như cộng tiền) trong LocalScript\n\n### Ví dụ thực tế:\n```lua\n-- LocalScript (trong GUI Button)\nlocal button = script.Parent\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal buyItemEvent = ReplicatedStorage:WaitForChild(\"BuyItem\")\n\nbutton.MouseButton1Click:Connect(function()\n    buyItemEvent:FireServer(\"Sword\")  -- Gửi yêu cầu lên server\nend)\n\n-- Server Script\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal buyItemEvent = Instance.new(\"RemoteEvent\")\nbuyItemEvent.Name = \"BuyItem\"\nbuyItemEvent.Parent = ReplicatedStorage\n\nbuyItemEvent.OnServerEvent:Connect(function(player, itemName)\n    -- Validate ở server\n    if player.leaderstats.Coins.Value >= 100 then\n        player.leaderstats.Coins.Value -= 100\n        -- Cộng item cho player\n        print(player.Name .. \" đã mua \" .. itemName)\n    else\n        warn(player.Name .. \" không đủ tiền!\")\n    end\nend)\n```"},
+    
+    {q: ["cách lấy service trong roblox", "getservice", "roblox services"], a: "## 🔌 Cách lấy Service trong Roblox\n\nService là các hệ thống cốt lõi của Roblox (Players, Workspace, Lighting...). Có 2 cách lấy service:\n\n### ❌ Cách cũ (KHÔNG khuyến khích):\n```lua\nlocal players = game.Players\nlocal workspace = game.Workspace\nlocal lighting = game.Lighting\n```\n**Vấn đề**: Nếu service chưa load, sẽ bị lỗi `nil`\n\n### ✅ Cách mới (KHUYÊN DÙNG):\n```lua\nlocal Players = game:GetService(\"Players\")\nlocal Workspace = game:GetService(\"Workspace\")\nlocal Lighting = game:GetService(\"Lighting\")\nlocal TweenService = game:GetService(\"TweenService\")\nlocal DataStoreService = game:GetService(\"DataStoreService\")\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n```\n\n**Ưu điểm**:\n- Tự động chờ service load xong\n- Không bị lỗi nil\n- Code rõ ràng, dễ đọc\n\n### Các Service phổ biến:\n```lua\n-- Quản lý người chơi\nlocal Players = game:GetService(\"Players\")\n\n-- Quản lý không gian game\nlocal Workspace = game:GetService(\"Workspace\")\n\n-- Quản lý ánh sáng, thời tiết\nlocal Lighting = game:GetService(\"Lighting\")\n\n-- Quản lý âm thanh\nlocal SoundService = game:GetService(\"SoundService\")\n\n-- Quản lý hiệu ứng chuyển động\nlocal TweenService = game:GetService(\"TweenService\")\n\n-- Quản lý lưu trữ dữ liệu\nlocal DataStoreService = game:GetService(\"DataStoreService\")\n\n-- Quản lý giao tiếp client-server\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n\n-- Quản lý input (chuột, bàn phím)\nlocal UserInputService = game:GetService(\"UserInputService\")\n\n-- Quản lý chạy game\nlocal RunService = game:GetService(\"RunService\")\n```\n\n###  Mẹo:\n- Đặt tất cả service ở đầu script\n- Viết hoa chữ cái đầu (Players, không phải players)\n- Dùng comment để ghi nhớ chức năng\n\n```lua\n-- Services\nlocal Players = game:GetService(\"Players\")\nlocal TweenService = game:GetService(\"TweenService\")\nlocal DataStoreService = game:GetService(\"DataStoreService\")\n\n-- Variables\nlocal myData = DataStoreService:GetDataStore(\"PlayerData\")\n```"},
+    
+    {q: ["tweenservice là gì", "cách làm chuyển động mượt roblox", "tween roblox"], a: "##  TweenService - Chuyển động mượt mà trong Roblox\n\nTweenService giúp thay đổi thuộc tính của object một cách **mượt mà** và **chuyên nghiệp**.\n\n### Cơ bản:\n```lua\nlocal TweenService = game:GetService(\"TweenService\")\nlocal part = workspace.Part\n\n-- Tạo thông tin tween\nlocal tweenInfo = TweenInfo.new(\n    2,                          -- Thời gian (giây)\n    Enum.EasingStyle.Quad,      -- Kiểu chuyển động\n    Enum.EasingDirection.Out,   -- Hướng easing\n    0,                          -- Số lần lặp (0 = 1 lần)\n    false,                      -- Đảo ngược (reverse)\n    0                           -- Độ trễ (delay)\n)\n\n-- Tạo mục tiêu\nlocal goals = {\n    Position = Vector3.new(0, 10, 0),\n    Color = Color3.fromRGB(255, 0, 0),\n    Size = Vector3.new(5, 5, 5)\n}\n\n-- Tạo và chạy tween\nlocal tween = TweenService:Create(part, tweenInfo, goals)\ntween:Play()\n```\n\n### Các EasingStyle phổ biến:\n```lua\nEnum.EasingStyle.Linear      -- Đều, không tăng tốc\nEnum.EasingStyle.Quad        -- Tăng tốc nhẹ\nEnum.EasingStyle.Cubic       -- Tăng tốc vừa\nEnum.EasingStyle.Quart       -- Tăng tốc mạnh\nEnum.EasingStyle.Quint       -- Tăng tốc rất mạnh\nEnum.EasingStyle.Sine        -- Dao động nhẹ\nEnum.EasingStyle.Expo        -- Tăng tốc cực mạnh\nEnum.EasingStyle.Circ        -- Tăng tốc theo hình tròn\nEnum.EasingStyle.Elastic     -- Đàn hồi\nEnum.EasingStyle.Back        -- Lùi lại rồi tiến\nEnum.EasingStyle.Bounce      -- Nảy lên\n```\n\n### EasingDirection:\n```lua\nEnum.EasingDirection.In      -- Tăng tốc ở đầu\nEnum.EasingDirection.Out     -- Giảm tốc ở cuối\nEnum.EasingDirection.InOut   -- Tăng tốc đầu, giảm tốc cuối\n```\n\n### Ví dụ thực tế:\n\n#### 1. Di chuyển cửa:\n```lua\nlocal door = workspace.Door\nlocal openPos = door.Position + Vector3.new(0, 5, 0)\nlocal closePos = door.Position\n\nlocal tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad)\n\nlocal openTween = TweenService:Create(door, tweenInfo, {Position = openPos})\nlocal closeTween = TweenService:Create(door, tweenInfo, {Position = closePos})\n\n-- Mở cửa\nopenTween:Play()\nwait(3)\n-- Đóng cửa\ncloseTween:Play()\n```\n\n#### 2. Hiệu ứng GUI:\n```lua\nlocal frame = script.Parent\nframe.Position = UDim2.new(0.5, -100, 2, 0)  -- Bắt đầu từ dưới màn hình\n\nlocal tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Back)\nlocal goals = {Position = UDim2.new(0.5, -100, 0.5, -50)}\n\nlocal tween = TweenService:Create(frame, tweenInfo, goals)\ntween:Play()\n```\n\n#### 3. Đổi màu liên tục:\n```lua\nlocal part = workspace.Part\nlocal colors = {\n    Color3.fromRGB(255, 0, 0),\n    Color3.fromRGB(0, 255, 0),\n    Color3.fromRGB(0, 0, 255)\n}\n\nfor _, color in ipairs(colors) do\n    local tween = TweenService:Create(part, TweenInfo.new(1), {Color = color})\n    tween:Play()\n    tween.Completed:Wait()  -- Chờ tween xong mới tiếp tục\nend\n```\n\n### Sự kiện Tween:\n```lua\ntween:Play()\n\ntween.Completed:Connect(function()\n    print(\"Tween đã hoàn thành!\")\nend)\n\ntween:Cancel()    -- Hủy tween\ntween:Pause()     -- Tạm dừng\ntween:Resume()    -- Tiếp tục\n```\n\n### ⚡ Tips:\n- Dùng `TweenInfo.new()` để tái sử dụng thông tin\n- Kết hợp nhiều thuộc tính trong một tween\n- Dùng `:Wait()` để đồng bộ nhiều tween"},
+    
+    {q: ["datastore là gì", "cách lưu dữ liệu roblox", "save data roblox"], a: "## 💾 DataStoreService - Lưu dữ liệu trong Roblox\n\nDataStore giúp lưu dữ liệu người chơi **qua các phiên chơi** (không bị mất khi thoát game).\n\n### ⚠️ QUAN TRỌNG:\n- DataStore chỉ hoạt động khi game đã **publish** lên Roblox\n- Trong Studio test, phải bật \"Enable Studio Access to API Services\"\n- Luôn dùng `pcall` để tránh lỗi mạng\n\n### Cấu trúc cơ bản:\n```lua\nlocal DataStoreService = game:GetService(\"DataStoreService\")\nlocal Players = game:GetService(\"Players\")\n\n-- Tạo DataStore (tên tùy ý)\nlocal playerData = DataStoreService:GetDataStore(\"PlayerData_v1\")\n\n-- Hàm load data\nlocal function loadData(player)\n    local success, data = pcall(function()\n        return playerData:GetAsync(\"Player_\" .. player.UserId)\n    end)\n    \n    if success then\n        if data then\n            print(\"Đã load data cho\", player.Name)\n            return data\n        else\n            print(\"Player mới, tạo data mặc định\")\n            return {\n                Coins = 0,\n                Level = 1,\n                Inventory = {}\n            }\n        end\n    else\n        warn(\"Lỗi load data:\", data)\n        return nil\n    end\nend\n\n-- Hàm save data\nlocal function saveData(player, data)\n    local success, err = pcall(function()\n        playerData:SetAsync(\"Player_\" .. player.UserId, data)\n    end)\n    \n    if success then\n        print(\"Đã save data cho\", player.Name)\n    else\n        warn(\"Lỗi save data:\", err)\n    end\nend\n\n-- Load khi player vào game\nPlayers.PlayerAdded:Connect(function(player)\n    local data = loadData(player)\n    if data then\n        -- Tạo leaderstats\n        local leaderstats = Instance.new(\"Folder\")\n        leaderstats.Name = \"leaderstats\"\n        leaderstats.Parent = player\n        \n        local coins = Instance.new(\"IntValue\")\n        coins.Name = \"Coins\"\n        coins.Value = data.Coins\n        coins.Parent = leaderstats\n    end\nend)\n\n-- Save khi player rời game\nPlayers.PlayerRemoving:Connect(function(player)\n    local leaderstats = player:FindFirstChild(\"leaderstats\")\n    if leaderstats then\n        local data = {\n            Coins = leaderstats.Coins.Value,\n            Level = 1,\n            Inventory = {}\n        }\n        saveData(player, data)\n    end\nend)\n```\n\n### Best Practices:\n\n#### 1. Session Locking (chống ghi đè):\n```lua\nlocal sessionData = {}\n\nPlayers.PlayerAdded:Connect(function(player)\n    local data = loadData(player)\n    sessionData[player.UserId] = data\nend)\n\nPlayers.PlayerRemoving:Connect(function(player)\n    local data = sessionData[player.UserId]\n    if data then\n        saveData(player, data)\n        sessionData[player.UserId] = nil\n    end\nend)\n```\n\n#### 2. Auto-save định kỳ:\n```lua\n-- Save mỗi 5 phút\ntask.spawn(function()\n    while true do\n        task.wait(300)  -- 5 phút\n        for _, player in ipairs(Players:GetPlayers()) do\n            local data = sessionData[player.UserId]\n            if data then\n                saveData(player, data)\n            end\n        end\n        print(\"Đã auto-save cho tất cả player\")\n    end\nend)\n```\n\n#### 3. Versioning (quản lý phiên bản data):\n```lua\n-- Khi cập nhật game, tạo DataStore mới\nlocal playerData = DataStoreService:GetDataStore(\"PlayerData_v2\")\n\n-- Migration data từ v1 sang v2\nlocal function migrateData(player)\n    local oldData = DataStoreService:GetDataStore(\"PlayerData_v1\")\n    local success, data = pcall(function()\n        return oldData:GetAsync(\"Player_\" .. player.UserId)\n    end)\n    \n    if success and data then\n        -- Chuyển đổi format cũ sang mới\n        local newData = {\n            Coins = data.money or 0,\n            Level = data.level or 1,\n            VIP = data.premium or false\n        }\n        saveData(player, newData)\n    end\nend\n```\n\n### ⚠️ Giới hạn:\n- **60 requests/phút** cho mỗi DataStore\n- **4MB** tối đa cho mỗi key\n- **260 ký tự** tối đa cho key name\n\n### Các loại DataStore:\n```lua\n-- DataStore thông thường\nlocal store = DataStoreService:GetDataStore(\"Name\")\n\n-- GlobalDataStore (chia sẻ giữa các place)\nlocal global = DataStoreService:GetGlobalDataStore()\n\n-- OrderedDataStore (có sắp xếp)\nlocal leaderboard = DataStoreService:GetOrderedDataStore(\"Leaderboard\")\n```"},
+    
+    {q: ["remoteevent là gì", "client server communication", "remote roblox"], a: "##  RemoteEvent - Giao tiếp Client ↔ Server\n\nRemoteEvent là cầu nối giữa **LocalScript** (client) và **Script** (server).\n\n### Tại sao cần RemoteEvent?\n- LocalScript chạy trên máy người chơi → **KHÔNG an toàn**\n- Server Script chạy trên máy chủ → **An toàn**\n- RemoteEvent giúp client gửi yêu cầu lên server xử lý\n\n### Cách tạo RemoteEvent:\n1. Vào `ReplicatedStorage`\n2. Click phải → Insert Object → RemoteEvent\n3. Đặt tên (ví dụ: \"BuyItem\")\n\n### Ví dụ hoàn chỉnh:\n\n#### LocalScript (trong GUI Button):\n```lua\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal Players = game:GetService(\"Players\")\n\nlocal player = Players.LocalPlayer\nlocal buyEvent = ReplicatedStorage:WaitForChild(\"BuyItem\")\nlocal button = script.Parent\n\nbutton.MouseButton1Click:Connect(function()\n    local itemName = \"Sword\"\n    local price = 100\n    \n    -- Gửi yêu cầu lên server\n    buyEvent:FireServer(itemName, price)\n    \n    button.Text = \"Đang mua...\"\n    button.Interactable = false\nend)\n```\n\n#### Server Script (trong ServerScriptService):\n```lua\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal Players = game:GetService(\"Players\")\n\nlocal buyEvent = Instance.new(\"RemoteEvent\")\nbuyEvent.Name = \"BuyItem\"\nbuyEvent.Parent = ReplicatedStorage\n\nbuyEvent.OnServerEvent:Connect(function(player, itemName, price)\n    -- ⚠️ LUÔN validate ở server!\n    \n    -- Kiểm tra player có đủ tiền không\n    local leaderstats = player:FindFirstChild(\"leaderstats\")\n    if not leaderstats then return end\n    \n    local coins = leaderstats:FindFirstChild(\"Coins\")\n    if not coins then return end\n    \n    if coins.Value < price then\n        warn(player.Name .. \" không đủ tiền!\")\n        return\n    end\n    \n    -- Kiểm tra item có tồn tại không\n    local validItems = {\"Sword\", \"Shield\", \"Potion\"}\n    local isValid = false\n    for _, item in ipairs(validItems) do\n        if item == itemName then\n            isValid = true\n            break\n        end\n    end\n    \n    if not isValid then\n        warn(player.Name .. \" cố tình hack!\")\n        return\n    end\n    \n    -- Thực hiện giao dịch\n    coins.Value = coins.Value - price\n    \n    -- Cộng item vào inventory\n    local inventory = player:FindFirstChild(\"Inventory\")\n    if not inventory then\n        inventory = Instance.new(\"Folder\")\n        inventory.Name = \"Inventory\"\n        inventory.Parent = player\n    end\n    \n    local item = Instance.new(\"StringValue\")\n    item.Name = itemName\n    item.Parent = inventory\n    \n    print(player.Name .. \" đã mua \" .. itemName)\nend)\n```\n\n### RemoteFunction (có phản hồi):\n```lua\n-- Server\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal checkLevelEvent = Instance.new(\"RemoteFunction\")\ncheckLevelEvent.Name = \"CheckLevel\"\ncheckLevelEvent.Parent = ReplicatedStorage\n\ncheckLevelEvent.OnServerInvoke = function(player)\n    local leaderstats = player:FindFirstChild(\"leaderstats\")\n    if leaderstats then\n        return leaderstats.Level.Value\n    end\n    return 0\nend\n\n-- Client\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal checkLevelEvent = ReplicatedStorage:WaitForChild(\"CheckLevel\")\n\nlocal myLevel = checkLevelEvent:InvokeServer()\nprint(\"Level của tôi:\", myLevel)\n```\n\n### ⚠️ Bảo mật:\n```lua\n-- ❌ SAI: Tin tưởng client\nbuyEvent.OnServerEvent:Connect(function(player, itemName)\n    player.Inventory[itemName] = true  -- Hacker có thể gửi bất kỳ item nào!\nend)\n\n-- ✅ ĐÚNG: Validate mọi thứ\nbuyEvent.OnServerEvent:Connect(function(player, itemName, price)\n    -- Kiểm tra giá\n    local shopItems = {\n        Sword = 100,\n        Shield = 150,\n        Potion = 50\n    }\n    \n    if not shopItems[itemName] then return end\n    if shopItems[itemName] ~= price then return end\n    \n    -- Kiểm tra tiền\n    if player.Coins.Value < price then return end\n    \n    -- Thực hiện\n    player.Coins.Value -= price\n    player.Inventory[itemName] = true\nend)\n```\n\n### Khi nào dùng gì?\n- **RemoteEvent**: Khi không cần phản hồi (mua item, chat...)\n- **RemoteFunction**: Khi cần phản hồi từ server (kiểm tra level, load data...)"},
+    
+    {q: ["cframe là gì", "di chuyển part không dùng physics", "vị trí part roblox"], a: "##  CFrame - Vị trí và Hướng xoay trong Roblox\n\nCFrame (Coordinate Frame) chứa thông tin về **vị trí** và **hướng xoay** của object trong không gian 3D.\n\n### CFrame vs Position:\n```lua\n-- ❌ Position: Chỉ vị trí, không có hướng xoay\npart.Position = Vector3.new(0, 10, 0)\n\n-- ✅ CFrame: Vị trí + Hướng xoay\npart.CFrame = CFrame.new(0, 10, 0)\n```\n\n### Tạo CFrame:\n```lua\n-- CFrame tại vị trí (0, 10, 0)\nlocal cf1 = CFrame.new(0, 10, 0)\n\n-- CFrame với hướng xoay (radians)\nlocal cf2 = CFrame.Angles(0, math.rad(90), 0)  -- Xoay 90 độ quanh trục Y\n\n-- CFrame nhìn về một điểm\nlocal cf3 = CFrame.new(0, 10, 0, 5, 10, 5)  -- Nhìn về (5, 10, 5)\n\n-- CFrame từ Vector3\nlocal pos = Vector3.new(0, 10, 0)\nlocal cf4 = CFrame.new(pos)\n```\n\n### Thao tác với CFrame:\n```lua\nlocal part = workspace.Part\n\n-- Di chuyển\npart.CFrame = CFrame.new(0, 10, 0)\n\n-- Di chuyển tương đối\npart.CFrame = part.CFrame + Vector3.new(0, 5, 0)  -- Lên 5 unit\n\n-- Xoay\npart.CFrame = part.CFrame * CFrame.Angles(0, math.rad(45), 0)\n\n-- Nhìn về một điểm\nlocal target = Vector3.new(10, 0, 10)\npart.CFrame = CFrame.new(part.Position, target)\n```\n\n### Các hàm CFrame hữu ích:\n```lua\nlocal cf = CFrame.new(0, 10, 0)\n\n-- Lấy vị trí\nlocal pos = cf.Position  -- Vector3.new(0, 10, 0)\n\n-- Lấy các thành phần\nlocal x, y, z = cf:ToEulerAnglesYXZ()\n\n-- Nhân CFrame (kết hợp)\nlocal cf1 = CFrame.new(0, 10, 0)\nlocal cf2 = CFrame.Angles(0, math.rad(90), 0)\nlocal combined = cf1 * cf2\n\n-- CFrame ngược lại\nlocal inverse = cf:Inverse()\n\n-- CFrame hướng về\nlocal lookAt = CFrame.lookAt(Vector3.new(0,0,0), Vector3.new(10,0,10))\n```\n\n### Ví dụ thực tế:\n\n#### 1. Teleport player:\n```lua\nlocal Players = game:GetService(\"Players\")\nlocal player = Players.LocalPlayer\nlocal character = player.Character\n\nif character then\n    local humanoidRootPart = character:FindFirstChild(\"HumanoidRootPart\")\n    if humanoidRootPart then\n        humanoidRootPart.CFrame = CFrame.new(0, 50, 0)  -- Teleport lên cao\n    end\nend\n```\n\n#### 2. Tạo vòng tròn các part:\n```lua\nlocal center = Vector3.new(0, 5, 0)\nlocal radius = 10\nlocal numParts = 20\n\nfor i = 1, numParts do\n    local angle = (i / numParts) * math.pi * 2\n    local x = center.X + math.cos(angle) * radius\n    local z = center.Z + math.sin(angle) * radius\n    \n    local part = Instance.new(\"Part\")\n    part.Size = Vector3.new(1, 1, 1)\n    part.Position = Vector3.new(x, center.Y, z)\n    part.Anchored = true\n    part.Parent = workspace\nend\n```\n\n#### 3. Object nhìn theo player:\n```lua\nlocal turret = workspace.Turret\nlocal player = game.Players.LocalPlayer\n\nwhile true do\n    if player.Character and player.Character:FindFirstChild(\"HumanoidRootPart\") then\n        local playerPos = player.Character.HumanoidRootPart.Position\n        turret.CFrame = CFrame.new(turret.Position, playerPos)\n    end\n    task.wait()\nend\n```\n\n###  Performance Tips:\n- Dùng `CFrame` thay vì `Position` khi cần xoay\n- Tránh thay đổi CFrame mỗi frame (gây lag)\n- Dùng `TweenService` để di chuyển mượt mà"},
+    
+    {q: ["raycast là gì", "bắn tia trong roblox", "kiểm tra va chạm"], a: "## 🎯 Raycast - Bắn tia kiểm tra va chạm\n\nRaycast bắn một tia từ điểm A đến điểm B và kiểm tra xem có vật thể nào chắn đường không.\n\n### Raycast cơ bản:\n```lua\nlocal workspace = game:GetService(\"Workspace\")\n\nlocal origin = Vector3.new(0, 10, 0)  -- Điểm bắt đầu\nlocal direction = Vector3.new(0, -10, 0)  -- Hướng và khoảng cách\n\nlocal raycastParams = RaycastParams.new()\nraycastParams.FilterDescendantsInstances = {workspace.Baseplate}\nraycastParams.FilterType = Enum.RaycastFilterType.Include\n\nlocal result = workspace:Raycast(origin, direction, raycastParams)\n\nif result then\n    print(\"Va chạm với:\", result.Instance.Name)\n    print(\"Vị trí va chạm:\", result.Position)\n    print(\"Pháp tuyến:\", result.Normal)\n    print(\"Vật liệu:\", result.Material)\nelse\n    print(\"Không va chạm gì\")\nend\n```\n\n### RaycastParams:\n```lua\nlocal params = RaycastParams.new()\n\n-- Chỉ kiểm tra với các object cụ thể\nparams.FilterDescendantsInstances = {workspace.Map}\nparams.FilterType = Enum.RaycastFilterType.Include\n\n-- Bỏ qua các object cụ thể\nparams.FilterDescendantsInstances = {player.Character}\nparams.FilterType = Enum.RaycastFilterType.Exclude\n\n-- Bỏ qua water\nparams.IgnoreWater = true\n\n-- Chỉ kiểm tra với collision group cụ thể\nparams.CollisionGroup = \"Default\"\n```\n\n### Ví dụ thực tế:\n\n#### 1. Kiểm tra chạm đất:\n```lua\nlocal character = script.Parent\nlocal humanoidRootPart = character:WaitForChild(\"HumanoidRootPart\")\n\nlocal function isGrounded()\n    local origin = humanoidRootPart.Position\n    local direction = Vector3.new(0, -5, 0)  -- Xuống dưới 5 unit\n    \n    local params = RaycastParams.new()\n    params.FilterDescendantsInstances = {character}\n    params.FilterType = Enum.RaycastFilterType.Exclude\n    \n    local result = workspace:Raycast(origin, direction, params)\n    \n    return result ~= nil  -- True nếu chạm đất\nend\n\nif isGrounded() then\n    print(\"Đang đứng trên mặt đất\")\nend\n```\n\n#### 2. Bắn súng:\n```lua\nlocal gun = script.Parent\nlocal shootEvent = gun:WaitForChild(\"ShootEvent\")\n\nshootEvent.OnServerEvent:Connect(function(player, mousePos)\n    local character = player.Character\n    if not character then return end\n    \n    local gunPart = character:FindFirstChild(\"Gun\")\n    if not gunPart then return end\n    \n    local origin = gunPart.Position\n    local direction = (mousePos - origin).Unit * 100  -- 100 studs\n    \n    local params = RaycastParams.new()\n    params.FilterDescendantsInstances = {character}\n    params.FilterType = Enum.RaycastFilterType.Exclude\n    \n    local result = workspace:Raycast(origin, direction, params)\n    \n    if result then\n        local hitPart = result.Instance\n        print(\"Bắn trúng:\", hitPart.Name)\n        \n        -- Tạo hiệu ứng\n        local bulletHole = Instance.new(\"Part\")\n        bulletHole.Size = Vector3.new(0.1, 0.1, 0.1)\n        bulletHole.Position = result.Position\n        bulletHole.Anchored = true\n        bulletHole.Color = Color3.fromRGB(0, 0, 0)\n        bulletHole.Parent = workspace\n        \n        -- Xóa sau 5 giây\n        game:GetService(\"Debris\"):AddItem(bulletHole, 5)\n    end\nend)\n```\n\n#### 3. Tầm nhìn NPC:\n```lua\nlocal npc = script.Parent\nlocal npcHead = npc:WaitForChild(\"Head\")\n\nlocal function canSeePlayer(player)\n    local character = player.Character\n    if not character then return false end\n    \n    local playerHead = character:FindFirstChild(\"Head\")\n    if not playerHead then return false end\n    \n    local origin = npcHead.Position\n    local direction = (playerHead.Position - origin).Unit * 50  -- Tầm nhìn 50 studs\n    \n    local params = RaycastParams.new()\n    params.FilterDescendantsInstances = {npc}\n    params.FilterType = Enum.RaycastFilterType.Exclude\n    \n    local result = workspace:Raycast(origin, direction, params)\n    \n    -- Nếu không va chạm gì hoặc va chạm với player\n    if not result or result.Instance:IsDescendantOf(character) then\n        return true\n    end\n    \n    return false\nend\n\n-- Kiểm tra mỗi giây\nwhile true do\n    for _, player in ipairs(game.Players:GetPlayers()) do\n        if canSeePlayer(player) then\n            print(npc.Name .. \" nhìn thấy \" .. player.Name)\n        end\n    end\n    task.wait(1)\nend\n```\n\n### Spherecast và Blockcast:\n```lua\n-- Spherecast (tia hình cầu)\nlocal radius = 2\nlocal result = workspace:Spherecast(origin, radius, direction, params)\n\n-- Blockcast (tia hình hộp)\nlocal size = Vector3.new(2, 2, 2)\nlocal result = workspace:Blockcast(CFrame.new(origin), size, direction, params)\n```\n\n### ⚡ Performance:\n- Raycast khá nặng, không nên dùng quá nhiều mỗi frame\n- Dùng `FilterDescendantsInstances` để giảm số object kiểm tra\n- Cache RaycastParams nếu dùng nhiều lần"}
+];
+
+const COMMANDS = [
+    "/help - Xem hướng dẫn đầy đủ",
+    "/reset - Xóa sạch dữ liệu & khởi động lại",
+    "/day câu hỏi => câu trả lời - Dạy AI kiến thức mới",
+    "/search từ khóa - Tìm kiếm thông tin trên Web",
+    "/history - Xem lịch sử chat",
+    "/clear - Xóa màn hình chat",
+    "/theme - Đổi giao diện Sáng/Tối"
+];
+
+function save(){
+    localStorage.setItem("doraemon_memory", JSON.stringify(memory));
+    localStorage.setItem("doraemon_history", JSON.stringify(history.slice(-100)));
+    localStorage.setItem("doraemon_knowledge", JSON.stringify(knowledge));
+}
+
+function escapeHTML(text){
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatTime(){
+    return new Date().toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+}
+
+function formatCode(text){
+    return text.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+        return `<div class="code"><span class="code-lang">${lang || 'lua'}</span>${escapeHTML(code.trim())}</div>`;
+    });
+}
+
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const suggestions = document.getElementById("suggestions");
+
+function addMessage(role, text, showTime = true){
+    const div = document.createElement("div");
+    div.className = "msg " + (role === "user" ? "user" : "ai");
+    const name = role === "user" ? "Bạn" : (memory.aiName || AI_NAME);
+    const timeHtml = showTime ? `<div class="time">${formatTime()}</div>` : "";
+    div.innerHTML = `<div class="name">${name}</div><div>${formatCode(escapeHTML(text))}</div>${timeHtml}`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping(){
+    const div = document.createElement("div");
+    div.className = "msg ai typing";
+    div.id = "typing-indicator";
+    div.innerHTML = `${memory.aiName || AI_NAME} đang truy xuất bộ não...<span class="dots">...</span>`;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+    let dots = 0;
+    window.typingInterval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        const el = div.querySelector(".dots");
+        if(el) el.textContent = ".".repeat(dots);
+    }, 300);
+}
+
+function removeTyping(){
+    const el = document.getElementById("typing-indicator");
+    if(el) el.remove();
+    clearInterval(window.typingInterval);
+}
+
+async function searchWeb(query) {
+    try {
+        const targetUrl = encodeURIComponent(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`);
+        const proxyUrl = `https://api.allorigins.win/raw?url=${targetUrl}`;
+        const response = await fetch(proxyUrl);
+        const html = await response.text();
+        const snippets = html.match(/<a class="result__snippet[^>]*>(.*?)<\/a>/gi);
+        if (!snippets || snippets.length === 0) return null;
+        let results = [];
+        for (let i = 0; i < Math.min(2, snippets.length); i++) {
+            let text = snippets[i].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            if (text.length > 30) results.push(text);
+        }
+        return results.length > 0 ? `🌐 **Kết quả tìm kiếm cho "${query}":**\n\n• ${results.join('\n\n• ')}` : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function calculator(text){
+    let s = text.toLowerCase()
+        .replace(/tính|kết quả|bằng|bao nhiêu/g, "")
+        .replace(/căn bậc hai của|căn/g, "sqrt")
+        .replace(/bình phương của/g, "**2")
+        .replace(/chia/g, "/").replace(/nhân/g, "*").replace(/cộng/g, "+").replace(/trừ/g, "-")
+        .replace(/,/g, ".").replace(/\?/g, "").trim();
+    if (!/[0-9]/.test(s)) return null;
+    try {
+        s = s.replace(/\^/g, "**");
+        if (/[^0-9+\-*/%.()\sMath.sqrt.sin.cos.tan.log.abs.pie^]/.test(s)) return null;
+        const result = Function('"use strict"; return (' + s + ')')();
+        if (!Number.isFinite(result)) return null;
+        const formatted = Number.isInteger(result) ? result : parseFloat(result.toFixed(6));
+        return `🧮 Kết quả: ${formatted}`;
+    } catch (e) { 
+        return null; 
+    }
+}
+
+function similarity(a, b){
+    const A = new Set(normalize(a).split(/\s+/).filter(w => w.length > 2));
+    const B = new Set(normalize(b).split(/\s+/).filter(w => w.length > 2));
+    if(A.size === 0 || B.size === 0) return 0;
+    let same = 0;
+    A.forEach(x => { if(B.has(x)) same++; });
+    return same / Math.max(A.size, B.size);
+}
+
+function normalize(text){
+    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d");
+}
+
+function findBestMatch(question){
+    let best = null, bestScore = 0;
+    const allKnow = [...SEED_KNOWLEDGE, ...knowledge];
+    for(const item of allKnow){
+        const score = similarity(question, item.q);
+        if(score > bestScore){ bestScore = score; best = item; }
+    }
+    return bestScore >= 0.25 ? best : null;
+}
+
+async function thinkAsync(text){
+    const q = normalize(text);
+    if(q === "/reset"){
+        if(confirm("️ Bạn có chắc muốn XÓA SẠCH toàn bộ dữ liệu?")){
+            localStorage.clear();
+            location.reload();
+        }
+        return "Đã hủy.";
+    }
+    if(q === "/help"){
+        return ` **DORAEMON AI V2 ULTIMATE - EXPANDED EDITION**\n\n**Lệnh hệ thống:**\n${COMMANDS.join('\n')}\n\n**Bộ kiến thức mở rộng:**\n✅ Lua cơ bản (biến, hàm, vòng lặp, table)\n✅ Roblox Studio (Script, LocalScript, Services)\n✅ TweenService (chuyển động mượt mà)\n✅ DataStore (lưu dữ liệu)\n✅ RemoteEvent (giao tiếp client-server)\n✅ CFrame (vị trí và xoay)\n✅ Raycast (kiểm tra va chạm)\n✅ Máy tính nâng cao (sin, cos, sqrt...)\n✅ Tự động tìm kiếm Web\n\n**Thử hỏi:**\n• "TweenService là gì?"\n• "Cách lưu dữ liệu trong Roblox"\n• "Sự khác nhau giữa Script và LocalScript"\n• "Căn bậc hai của 144"`;
+    }
+    if(q === "/clear"){
+        if(confirm("Xóa sạch lịch sử chat?")){
+            history = []; save(); chat.innerHTML = "";
+            return " Đã xóa lịch sử!";
+        }
+        return "Đã hủy.";
+    }
+    if(q === "/memory") return "🧠 **Bộ nhớ:**\n\n" + JSON.stringify(memory, null, 2);
+    if(q.startsWith("/name ")){
+        const name = text.substring(6).trim();
+        if(name){ memory.aiName = name; save(); document.getElementById("aiName").textContent = name; return `🤖 Đã đổi tên thành: **${name}**`; }
+    }
+    if(q.startsWith("/search ")){
+        showTyping();
+        const query = text.substring(8);
+        const result = await searchWeb(query);
+        removeTyping();
+        return result || `❌ Không tìm thấy kết quả nào trên mạng cho "${query}".`;
+    }
+    if(q === "/theme"){ toggleTheme(); return "Đã đổi giao diện!"; }
+    const calc = calculator(text);
+    if(calc) return calc;
+    const match = findBestMatch(text);
+    if(match) return match.a;
+    if((q.includes("là gì") || q.includes("là ai") || q.includes("như thế nào")) && !text.startsWith("/")){
+        showTyping();
+        const query = text.replace(/là gì|là ai|như thế nào|định nghĩa|\?/gi,"").trim();
+        const result = await searchWeb(query);
+        removeTyping();
+        if(result) return result + "\n\n_(Mình đã tự động lên mạng tìm kiếm thông tin này cho bạn)_";
+    }
+    if(/chào|hello|hi|hey|xin chào/.test(q)){
+        return `Chào ${memory.userName || 'bạn'}! 👋\n\nMình là **Doraemon AI V2 Ultimate - Expanded Edition**.\n\nMình đã được nâng cấp với bộ kiến thức mở rộng về:\n✅ Lập trình Lua chi tiết\n✅ Roblox Studio đầy đủ\n✅ Máy tính thông minh\n✅ Tự động tìm kiếm Web\n\nBạn cần giúp gì? Hãy thử hỏi về Lua, Roblox, hoặc bất cứ điều gì!`;
+    }
+    if(q.includes("ban la ai") || q.includes("ten ban")){
+        return `Mình là **${memory.aiName || AI_NAME}**\n\nPhiên bản: ${VERSION}\n\nMình là AI chatbot chạy hoàn toàn trên trình duyệt của bạn, không cần API key! Mình có bộ kiến thức mở rộng về lập trình Lua và Roblox Studio.`;
+    }
+    return `🤔 Mình chưa có thông tin này trong bộ nhớ.\n\nBạn có thể:\n1. **Dạy mình:** /day câu hỏi => câu trả lời\n2. **Tìm trên web:** /search từ khóa\n3. **Xem lệnh:** /help\n\nHoặc thử hỏi về Lua, Roblox, TweenService, DataStore...`;
+}
+
+function command(text){
+    if(!text.startsWith("/day ")) return null;
+    const body = text.substring(5);
+    const parts = body.split("=>");
+    if(parts.length < 2) return "❌ **Sai cú pháp!**\nDùng: /day câu hỏi => câu trả lời";
+    const q = parts[0].trim(), a = parts.slice(1).join("=>").trim();
+    if(!q || !a) return "❌ Câu hỏi hoặc câu trả lời trống!";
+    const existing = knowledge.find(k => normalize(k.q) === normalize(q));
+    if(existing){
+        if(confirm("Kiến thức này đã tồn tại. Cập nhật?")){ existing.a = a; existing.time = new Date().toISOString(); save(); return "✅ Đã **cập nhật** kiến thức!"; }
+        return "Đã hủy.";
+    }
+    knowledge.push({q: q, a: a, time: new Date().toISOString()});
+    save();
+    return `✅ Đã học!\n\n**Q:** ${q}\n**A:** ${a}`;
+}
+
+async function send(){
+    const text = input.value.trim();
+    if(!text) return;
+    input.value = "";
+    addMessage("user", text);
+    history.push({role:"user", text:text, time:new Date().toISOString()});
+    if(text.startsWith("/day ")){
+        const response = command(text);
+        addMessage("ai", response);
+        history.push({role:"ai", text:response, time:new Date().toISOString()});
+        save();
+        return;
+    }
+    showTyping();
+    setTimeout(async () => {
+        const response = await thinkAsync(text);
+        removeTyping();
+        addMessage("ai", response);
+        history.push({role:"ai", text:response, time:new Date().toISOString()});
+        save();
+    }, 400);
+}
+
+input.addEventListener("input", function(){
+    const val = this.value.toLowerCase();
+    if(val.startsWith("/")){
+        const matches = COMMANDS.filter(c => c.toLowerCase().includes(val));
+        if(matches.length > 0){
+            suggestions.innerHTML = matches.map(c => `<div class="suggestion-item" onclick="selectSuggestion('${c.split(' - ')[0]}')">${c}</div>`).join("");
+            suggestions.style.display = "block";
+        }else{ suggestions.style.display = "none"; }
+    }else{ suggestions.style.display = "none"; }
+});
+
+function selectSuggestion(text){ input.value = text; suggestions.style.display = "none"; input.focus(); }
+input.addEventListener("keydown", function(e){ if(e.key === "Enter") send(); if(e.key === "Escape") suggestions.style.display = "none"; });
+
+function closeModal(id){ document.getElementById(id).classList.remove("show"); }
+function showHistory(){
+    const content = document.getElementById("historyContent");
+    if(history.length === 0) content.innerHTML = "<p style='color:var(--text-secondary);text-align:center'>Chưa có lịch sử</p>";
+    else content.innerHTML = history.map(h => `<div class="knowledge-item"><div style="color:var(--text-secondary);font-size:12px">${h.time}</div><div style="color:${h.role==='user'?'var(--accent)':'var(--text-primary)'}">${h.role === "user" ? "👤 Bạn" : " AI"}: ${h.text}</div></div>`).reverse().join("");
+    document.getElementById("historyModal").classList.add("show");
+}
+function showKnowledge(){
+    const content = document.getElementById("knowledgeContent");
+    if(knowledge.length === 0) content.innerHTML = "<p style='color:var(--text-secondary);text-align:center'>Chưa có kiến thức tự học. (Nhưng mình đã có sẵn bộ kiến thức mở rộng về Lua/Roblox rồi!)</p>";
+    else content.innerHTML = knowledge.map((k, i) => `<div class="knowledge-item"><div class="knowledge-q">Q: ${k.q}</div><div class="knowledge-a">A: ${k.a}</div><button class="delete-btn" onclick="deleteKnowledge(${i})">🗑 Xóa</button></div>`).join("");
+    document.getElementById("knowledgeModal").classList.add("show");
+}
+function deleteKnowledge(index){ if(confirm("Xóa?")){ knowledge.splice(index, 1); save(); showKnowledge(); } }
+function toggleTheme(){ document.body.classList.toggle("light"); memory.theme = document.body.classList.contains("light") ? "light" : "dark"; save(); }
+function exportData(){
+    const data = {memory, knowledge, history, exportedAt: new Date().toISOString(), version: VERSION};
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `doraemon-ai-v2-backup.json`; a.click(); URL.revokeObjectURL(url);
+}
+
+function loadHistory(){
+    if(history.length === 0){
+        addMessage("ai", ` **Xin chào! Mình là Doraemon AI V2 Ultimate - Expanded Edition.**\n\nMình đã được nâng cấp với **bộ kiến thức mở rộng**:\n\n✅ **Lua cơ bản & nâng cao**\n   - Biến, hàm, vòng lặp, table\n   - Closure, metatable\n\n✅ **Roblox Studio đầy đủ**\n   - Script vs LocalScript\n   - Services (Players, TweenService...)\n   - TweenService (chuyển động mượt)\n   - DataStore (lưu dữ liệu)\n   - RemoteEvent (client-server)\n   - CFrame (vị trí & xoay)\n   - Raycast (va chạm)\n\n✅ **Máy tính thông minh**\n   - sin, cos, tan, sqrt, log\n   - Hỗ trợ tiếng Việt\n\n✅ **Tìm kiếm Web tự động**\n   - /search từ khóa\n   - Tự động khi hỏi "xxx là gì"\n\n**Thử ngay:**\n• "TweenService là gì?"\n• "Cách lưu dữ liệu trong Roblox"\n• "Căn bậc hai của 144"\n• "/search tin tức roblox"`, false);
+    }else{
+        history.slice(-50).forEach(h => addMessage(h.role, h.text, false));
+    }
+}
+
+if(memory.theme === "light") document.body.classList.add("light");
+document.getElementById("aiName").textContent = memory.aiName || AI_NAME;
+loadHistory();
+input.focus();
+</script>
+</body>
+  </html>
